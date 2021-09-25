@@ -4,6 +4,8 @@ import java.util.LinkedList;
 import java.util.NoSuchElementException;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 
 import data.Log;
@@ -18,9 +20,9 @@ public class OsuRequestRegulator {
 	private LinkedList<OsuRequest> m_apiRequests;
 	private LinkedList<OsuRequest> m_htmlRequests;
 	
-	private static int lastRefreshApiRequestsCount = 0;
-	private static int lastRefreshHtmlRequestsCount = 0;
-	private static long lastLoadRefresh = 0;
+	private int lastRefreshApiRequestsCount = 0;
+	private int lastRefreshHtmlRequestsCount = 0;
+	private long lastLoadRefresh = 0;
 	
 	public static OsuRequestRegulator getInstance() {
 		if(instance == null) instance = new OsuRequestRegulator();
@@ -44,6 +46,7 @@ public class OsuRequestRegulator {
 	// based on the amount of requests they can do using their request type
 	private void startRequestTimer(boolean p_isApi) {
 		final ApplicationStats stats = ApplicationStats.getInstance();
+		final ThreadingManager threadManager = ThreadingManager.getInstance();
 		long delay = (long) (60000.0 / (float) (p_isApi ? Constants.OSU_API_REQUESTS_PER_MINUTE :
 														  Constants.OSU_HTML_REQUESTS_PER_MINUTE));
 		
@@ -66,7 +69,7 @@ public class OsuRequestRegulator {
 				if(toProcess != null) {
 					final OsuRequest request = toProcess;
 					
-					ThreadingManager.getInstance().executeAsync(new Runnable() {
+					threadManager.executeAsync(new Runnable() {
 						public void run() {
 							int attempts = 0;
 							
@@ -75,7 +78,7 @@ public class OsuRequestRegulator {
 									if(p_isApi) stats.addOsuApiRequestSent();
 									else stats.addOsuHtmlRequestSent();
 									
-									request.send();
+									request.send(p_isApi);
 									break;
 								} catch(Exception e) {
 									setStalled(p_isApi, true);
@@ -108,40 +111,13 @@ public class OsuRequestRegulator {
 	public Object sendRequestSync(OsuRequest p_request, int p_timeout, boolean p_priority) {
 		ApplicationStats stats = ApplicationStats.getInstance();
 		
-		p_request.setTimeout(p_timeout > 0 ? p_timeout : 30000);
-		
-		// assign a type in advance
-		if(p_request.getType() == RequestTypes.BOTH) {
-			RequestTypes type = RequestTypes.API;
-			
-			// if we're stalled anywhere, use the other
-			if(stats.isOsuApiStalled() && !stats.isOsuHtmlStalled()) type = RequestTypes.HTML;
-			else {
-				// if html is literally empty, use it
-				if(m_htmlRequests.size() == 0) type = RequestTypes.HTML;
-				else {
-					if(stats.getOsuApiLoad() > stats.getOsuHtmlLoad()) type = RequestTypes.HTML;
-				}
-			}
-			
-			p_request.setType(type);
-		}
-		
-		p_request.setSentTime();
-		
-		if(p_request.getType() == RequestTypes.API) {
-			if(p_priority) m_apiRequests.addFirst(p_request);
-			else m_apiRequests.add(p_request);
-		} else {
-			if(p_priority) m_htmlRequests.addFirst(p_request);
-			else m_htmlRequests.add(p_request);
-		}
+		sendRequest(p_request, p_timeout, p_priority);
 		
 		int timeElapsed = 0;
 		
 		while(p_request.getAnswer() == null) {
 			if(timeElapsed >= p_request.getTimeout()) {
-				if(p_request.getType() == RequestTypes.API) {
+				if(p_request.getType() == OsuRequestTypes.API) {
 					m_apiRequests.remove(p_request);
 					stats.addOsuApiRequestFailed();
 				} else {
@@ -155,6 +131,47 @@ public class OsuRequestRegulator {
 		}
 		
 		return p_request.getAnswer();
+	}
+	
+	public Future<Object> sendRequestAsync(OsuRequest p_request, int p_timeout, boolean p_priority) {
+		return ThreadingManager.getInstance().executeAsync(new Callable<Object>() {
+			public Object call() {
+				return p_request.getAnswer();
+			}
+		}, p_timeout, true);
+	}
+	
+	private void sendRequest(OsuRequest p_request, int p_timeout, boolean p_priority) {
+		ApplicationStats stats = ApplicationStats.getInstance();
+		
+		p_request.setTimeout(p_timeout > 0 ? p_timeout : 30000);
+		
+		// assign a type in advance
+		if(p_request.getType() == OsuRequestTypes.BOTH) {
+			OsuRequestTypes type = OsuRequestTypes.API;
+			
+			// if we're stalled anywhere, use the other
+			if(stats.isOsuApiStalled() && !stats.isOsuHtmlStalled()) type = OsuRequestTypes.HTML;
+			else {
+				// if html is literally empty, use it
+				if(m_htmlRequests.size() == 0) type = OsuRequestTypes.HTML;
+				else {
+					if(stats.getOsuApiLoad() > stats.getOsuHtmlLoad()) type = OsuRequestTypes.HTML;
+				}
+			}
+			
+			p_request.setType(type);
+		}
+		
+		p_request.setSentTime();
+		
+		if(p_request.getType() == OsuRequestTypes.API) {
+			if(p_priority) m_apiRequests.addFirst(p_request);
+			else m_apiRequests.add(p_request);
+		} else {
+			if(p_priority) m_htmlRequests.addFirst(p_request);
+			else m_htmlRequests.add(p_request);
+		}
 	}
 	
 	private void startLoadTimer() {

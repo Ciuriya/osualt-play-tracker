@@ -20,6 +20,7 @@ public class MessageListener extends ListenerAdapter {
 		// if we have a prefix, strip it, otherwise it's not a command (unless it's a dm)
 		if(message.startsWith(Constants.DEFAULT_PREFIX))
 			message = message.substring(Constants.DEFAULT_PREFIX.length());
+		else if(p_event.isFromGuild()) return;
 		
 		// find and run command
 		if(Command.handleCommand(p_event, message)) {

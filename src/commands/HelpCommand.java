@@ -16,15 +16,16 @@ public class HelpCommand extends Command {
 			  "Shows every available command to the user using this command.\n" +
 			  "Also allows the user to get more information about specific commands.", 
 			  new String[]{"help", "Shows the command list."}, 
-			  new String[]{"help <command>", "Displays a detailed help page for the specified command."});
+			  new String[]{"help <command>", "Displays a detailed help page for the specified command.\n" +
+			  								 "Example: **`{prefix}help osuset`**"});
 	}
 
 	@Override
 	public void onCommand(MessageReceivedEvent p_event, String[] args) {
 		EmbedBuilder builder = new EmbedBuilder();
 		
-		builder.setColor(CommandCategory.GENERAL.getColor());
-		builder.setFooter("Made by Smc#2222 (-Skye on osu!)");
+		builder.setColor(m_category.getColor());
+		builder.setFooter(Constants.DEFAULT_FOOTER);
 		
 		if(args.length > 0) {
 			Command cmd = Command.findCommand(args[0]);
@@ -44,7 +45,7 @@ public class HelpCommand extends Command {
 					String[] usage = usages[i];
 					
 					description += "```\n" + Constants.DEFAULT_PREFIX + usage[0] + "```\n";
-					description += usage[1] + "\n";
+					description += usage[1].replaceAll("\\{prefix}", Constants.DEFAULT_PREFIX) + "\n";
 					
 					if(i + 1 < usages.length) description += "\n";
 				}

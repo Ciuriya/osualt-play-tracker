@@ -26,7 +26,7 @@ public abstract class Command {
 	private Permission m_permission;
 	private boolean m_adminOnly;
 	private boolean m_allowsDm;
-	private CommandCategory m_category;
+	protected CommandCategory m_category;
 	private String m_shortDescription;
 	private String m_description;
 	private String[][] m_usages; // contains the usage first and the description of it in second
@@ -129,6 +129,7 @@ public abstract class Command {
 	
 	public static void registerCommands() {
 		new HelpCommand();
+		new OsuSetProfileCommand();
 		new StatsCommand();
 		new StopCommand();
 	}

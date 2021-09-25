@@ -3,21 +3,23 @@ package osu.api;
 public abstract class OsuRequest {
 	
 	private String m_name;
-	private RequestTypes m_type;
+	private OsuRequestTypes m_type;
 	private long m_sentTime;
 	private int m_timeout;
-	private Object m_answer; // this also stores the error message if it errors out
+	private String[] m_arguments;
+	private Object m_answer;
 	
-	public OsuRequest(String p_name, RequestTypes p_type) {
+	public OsuRequest(String p_name, OsuRequestTypes p_type, String... p_args) {
 		m_name = p_name;
 		m_type = p_type;
+		m_arguments = p_args;
 	}
 	
 	public String getName() {
 		return m_name;
 	}
 	
-	public RequestTypes getType() {
+	public OsuRequestTypes getType() {
 		return m_type;
 	}
 	
@@ -29,11 +31,15 @@ public abstract class OsuRequest {
 		return m_timeout;
 	}
 	
+	public String[] getArguments() {
+		return m_arguments;
+	}
+	
 	public Object getAnswer() {
 		return m_answer;
 	}
 	
-	public void setType(RequestTypes p_type) {
+	public void setType(OsuRequestTypes p_type) {
 		m_type = p_type;
 	}
 	
@@ -49,9 +55,5 @@ public abstract class OsuRequest {
 		m_answer = p_answer;
 	}
 
-	public abstract void send() throws Exception;
-}
-
-enum RequestTypes {
-	API, HTML, BOTH;
+	public abstract void send(boolean p_api) throws Exception;
 }

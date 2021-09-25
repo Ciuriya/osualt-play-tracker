@@ -7,6 +7,7 @@ import utils.Constants;
 public enum CommandCategory {
 	
 	GENERAL("General", Constants.DEFAULT_EMBED_COLOR),
+	OSU("osu!", new Color(1.0f, 102.0f / 255.0f, 170.0f / 255.0f)), // pink color
 	ADMIN("Admin", Color.GRAY);
 	
 	private String m_displayName;

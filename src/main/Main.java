@@ -13,9 +13,11 @@ import listeners.MessageListener;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
 import managers.DiscordActivityManager;
+import managers.ThreadingManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import osu.api.OsuRequestRegulator;
+import utils.Constants;
 import utils.FileUtils;
 import utils.TimeUtils;
 
@@ -40,7 +42,7 @@ public class Main {
 		
 		// connect to the sql database
 		JSONObject loginInfo = new JSONObject(FileUtils.readFile(new File("login.txt")));
-		DatabaseManager.getInstance().setup("discord", "jdbc:mysql://localhost/osualt-tracker", 
+		DatabaseManager.getInstance().setup(Constants.TRACKER_DATABASE_NAME, "jdbc:mysql://localhost/" + Constants.TRACKER_DATABASE_NAME, 
 											loginInfo.getString("sqlUser"), loginInfo.getString("sqlPass"));
 		
 		Log.log(Level.INFO, "Logging into discord...");
@@ -60,6 +62,7 @@ public class Main {
 		
 		Log.log(Level.INFO, "Setting up osu!");
 		
+		Constants.OSU_API_KEY = loginInfo.getString("osuApiKey");
 		OsuRequestRegulator.getInstance();
 		
 		Log.log(Level.INFO, "Setting up commands...");
@@ -75,6 +78,7 @@ public class Main {
 	}
 	
 	public static void stop(int p_code) {
+		ThreadingManager.getInstance().stop(5000); // ensure all threads are killed
 		DatabaseManager.getInstance().close(); // close databases
 		FileUtils.writeToFile(new File("codes.txt"), String.valueOf(p_code), false); // update the wrapper
 		

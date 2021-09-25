@@ -16,6 +16,7 @@ public class ThreadingManager {
 	
 	private static ThreadingManager instance;
 	private ExecutorService m_threadPool;
+	private boolean m_shuttingDown;
 	
 	public static ThreadingManager getInstance() {
 		if(instance == null) instance = new ThreadingManager();
@@ -24,10 +25,13 @@ public class ThreadingManager {
 	}
 	
 	public ThreadingManager() {
+		m_shuttingDown = false;
 		m_threadPool = Executors.newFixedThreadPool(Constants.THREAD_POOL_SIZE);
 	}
 	
 	public void executeSync(Runnable p_runnable, int p_timeout) {
+		if(m_shuttingDown) return;
+		
 		Future<?> future = m_threadPool.submit(p_runnable);
 		
 		try {
@@ -40,6 +44,8 @@ public class ThreadingManager {
 	}
 	
 	public <T> T executeSync(Callable<T> p_callable, int p_timeout) {
+		if(m_shuttingDown) return null;
+		
 		Future<T> future = m_threadPool.submit(p_callable);
 		
 		try {
@@ -57,6 +63,8 @@ public class ThreadingManager {
 	
 	public void executeAsync(Runnable p_runnable, int p_timeout,
 							 boolean p_interruptWhileRunning) {
+		if(m_shuttingDown) return;
+		
 		Future<?> future = m_threadPool.submit(p_runnable);
 		
 		new Timer().schedule(new TimerTask() {
@@ -69,6 +77,8 @@ public class ThreadingManager {
 	
 	public <T> Future<T> executeAsync(Callable<T> p_callable, int p_timeout, 
 									  boolean p_interruptWhileRunning) {
+		if(m_shuttingDown) return null;
+		
 		Future<T> future = m_threadPool.submit(p_callable);
 		
 		new Timer().schedule(new TimerTask() {
@@ -82,6 +92,7 @@ public class ThreadingManager {
 	}
 	
 	public void stop(int p_timeout) {
+		m_shuttingDown = true;
 		m_threadPool.shutdown();
 		
 		try {

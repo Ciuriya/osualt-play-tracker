@@ -22,8 +22,8 @@ public class StatsCommand extends Command {
 		EmbedBuilder builder = new EmbedBuilder();
 		ApplicationStats stats = ApplicationStats.getInstance();
 		
-		builder.setColor(CommandCategory.ADMIN.getColor());
-		builder.setFooter("Made by Smc#2222 (-Skye on osu!)");
+		builder.setColor(m_category.getColor());
+		builder.setFooter(Constants.DEFAULT_FOOTER);
 		builder.setAuthor("o!alt tracker stats page", Constants.SUPPORT_SERVER_LINK,
 						  p_event.getJDA().getSelfUser().getAvatarUrl());
 		builder.setDescription("**__" + TimeUtils.toDuration(stats.getUptime(), false) + "__** uptime");
