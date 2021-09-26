@@ -37,8 +37,8 @@ public class StatsCommand extends Command {
 		builder.addField("osu! api/html status", (stats.isOsuApiStalled() ? "Paused" : "Running") +
 												 " / " +
 												 (stats.isOsuHtmlStalled() ? "Paused" : "Running"), true);
-		builder.addField("osu! api/html loads", GeneralUtils.df(stats.getOsuApiLoad(), 2) + " / " + 
-												GeneralUtils.df(stats.getOsuHtmlLoad(), 2), true);
+		builder.addField("osu! api/html sent last minute", GeneralUtils.df(Constants.OSU_API_REQUESTS_PER_MINUTE * stats.getOsuApiLoad(), 2) + " / " + 
+														   GeneralUtils.df(Constants.OSU_HTML_REQUESTS_PER_MINUTE * stats.getOsuHtmlLoad(), 2), true);
 		builder.addField("o!api requests sent/failed", 
 						 stats.getOsuApiRequestsSent() + " / " + stats.getOsuApiRequestsFailed(), true);
 		builder.addField("o!html requests sent/failed", 
@@ -54,10 +54,21 @@ public class StatsCommand extends Command {
 				fieldText = cycleRunnable.getUsersLeft() + " / ";
 				fieldText += cycleRunnable.getInitialUserListSize() + " / ";
 				fieldText += TimeUtils.toDuration(cycleRunnable.getAverageUserRefreshDelay(), false) + " / ";
-				fieldText += TimeUtils.toDuration(cycleRunnable.getExpectedTimeUntilStop(), false);
+				fieldText += TimeUtils.toDuration(cycleRunnable.getTimeElapsed(), false) + " / ";
+				
+				
+				long expectedTimeLeft = cycleRunnable.getExpectedTimeUntilStop();
+				String expectedTimeLeftSign = "";
+				if(expectedTimeLeft < 0) { 
+					expectedTimeLeft = -expectedTimeLeft;
+					expectedTimeLeftSign = "-";
+				}
+				
+				fieldText += expectedTimeLeftSign + TimeUtils.toDuration(expectedTimeLeft, false) + " / ";
+				fieldText += TimeUtils.toDuration(cycleRunnable.getTimeUntilStop(), false);
 			}
 			
-			builder.addField("Cycle " + i + " users left/total users/avg user delay/time left", fieldText, false);
+			builder.addField("Cycle " + i + " users left/total/avg delay/elapsed/expected time left/calc'd time left", fieldText, false);
 		}
 		
 		DiscordChatUtils.embed(p_event.getChannel(), builder.build());

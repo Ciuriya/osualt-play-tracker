@@ -16,6 +16,6 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 		
 		GeneralUtils.sleep((int) m_runnableRefreshDelay);
 		
-		//callStart();
+		callStart();
 	}
 }

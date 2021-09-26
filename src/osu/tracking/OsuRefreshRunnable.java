@@ -38,8 +38,16 @@ public class OsuRefreshRunnable implements Runnable {
 		return usersRefreshed > 0 ? (System.currentTimeMillis() - m_lastStartTime) / usersRefreshed : m_cachedAverageUserRefreshDelay;
 	}
 	
-	public long getExpectedTimeUntilStop() {
+	public long getTimeUntilStop() {
 		return getUsersLeft() * getAverageUserRefreshDelay();
+	}
+	
+	public long getExpectedTimeUntilStop() {
+		return m_lastStartTime + m_runnableRefreshDelay - System.currentTimeMillis();
+	}
+	
+	public long getTimeElapsed() {
+		return System.currentTimeMillis() - m_lastStartTime;
 	}
 	
 	public int getActivityCycle() {
