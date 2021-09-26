@@ -31,6 +31,8 @@ public class OsuRequestRegulator {
 	}
 	
 	public OsuRequestRegulator() {
+		lastLoadRefresh = System.currentTimeMillis();
+		
 		m_apiRequests = new LinkedList<>();
 		m_htmlRequests = new LinkedList<>();
 		
@@ -47,8 +49,10 @@ public class OsuRequestRegulator {
 	private void startRequestTimer(boolean p_isApi) {
 		final ApplicationStats stats = ApplicationStats.getInstance();
 		final ThreadingManager threadManager = ThreadingManager.getInstance();
-		long delay = (long) (60000.0 / (float) (p_isApi ? Constants.OSU_API_REQUESTS_PER_MINUTE :
-														  Constants.OSU_HTML_REQUESTS_PER_MINUTE));
+		long delay = (long) (60000.0 / (double) (p_isApi ? Constants.OSU_API_REQUESTS_PER_MINUTE :
+														   Constants.OSU_HTML_REQUESTS_PER_MINUTE));
+		
+		setStalled(p_isApi, false);
 		
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 			public void run() {
@@ -124,6 +128,8 @@ public class OsuRequestRegulator {
 					m_htmlRequests.remove(p_request);
 					stats.addOsuHtmlRequestFailed();
 				}
+				
+				break;
 			}
 			
 			GeneralUtils.sleep(25);
@@ -152,13 +158,7 @@ public class OsuRequestRegulator {
 			
 			// if we're stalled anywhere, use the other
 			if(stats.isOsuApiStalled() && !stats.isOsuHtmlStalled()) type = OsuRequestTypes.HTML;
-			else {
-				// if html is literally empty, use it
-				if(m_htmlRequests.size() == 0) type = OsuRequestTypes.HTML;
-				else {
-					if(stats.getOsuApiLoad() > stats.getOsuHtmlLoad()) type = OsuRequestTypes.HTML;
-				}
-			}
+			else if(stats.getOsuApiLoad() > stats.getOsuHtmlLoad()) type = OsuRequestTypes.HTML;
 			
 			p_request.setType(type);
 		}
@@ -177,11 +177,11 @@ public class OsuRequestRegulator {
 	private void startLoadTimer() {
 		new Timer().scheduleAtFixedRate(new TimerTask() {
 			public void run() {
-				ThreadingManager.getInstance().executeAsync(new Runnable() {
+				ThreadingManager.getInstance().executeSync(new Runnable() {
 					public void run() {
 						calculateLoads();
 					}
-				}, 30000, true);
+				}, 1000);
 			}
 		}, 1000, 1000);
 	}

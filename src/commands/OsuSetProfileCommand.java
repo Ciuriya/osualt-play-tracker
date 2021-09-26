@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.util.logging.Level;
 
 import data.CommandCategory;
+import data.Database;
 import data.Log;
 import managers.DatabaseManager;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
@@ -57,7 +58,8 @@ public class OsuSetProfileCommand extends Command {
 		
 		String databaseErrorMessage = "A database error occured, please try again later!\n" +
 				   					  "If this keeps occuring, make sure to contact Smc#2222 (-Skye on osu!)";
-		Connection conn = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME).getConnection();
+		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Connection conn = db.getConnection();
 		
 		try {
 			PreparedStatement st = conn.prepareStatement(
@@ -70,7 +72,10 @@ public class OsuSetProfileCommand extends Command {
 			
 			st.executeUpdate();
 			st.close();
+			db.closeConnection(conn);
 		} catch(Exception e) {
+			db.closeConnection(conn);
+			
 			Log.log(Level.SEVERE, "Could not insert/update osu! user profile (" + fetchedPlayerId + ") SQL", e);
 			DiscordChatUtils.message(p_event.getChannel(), databaseErrorMessage);
 			return;
@@ -87,7 +92,10 @@ public class OsuSetProfileCommand extends Command {
 			
 			st.executeUpdate();
 			st.close();
+			db.closeConnection(conn);
 		} catch(Exception e) {
+			db.closeConnection(conn);
+			
 			Log.log(Level.SEVERE, "Could not insert/update discord info (" + fetchedPlayerId + ") SQL", e);
 			DiscordChatUtils.message(p_event.getChannel(), databaseErrorMessage);
 			return;

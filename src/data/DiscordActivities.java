@@ -4,6 +4,8 @@ import java.util.concurrent.Callable;
 
 import managers.ApplicationStats;
 import managers.ThreadingManager;
+import osu.tracking.OsuRefreshRunnable;
+import osu.tracking.OsuTrackingManager;
 import utils.TimeUtils;
 
 public enum DiscordActivities {
@@ -15,12 +17,23 @@ public enum DiscordActivities {
 	}),
 	TRACKED(new Callable<String>() {
 		public String call() {
-			return "with " + "0" + " osu! players";
+			return "with " + OsuTrackingManager.getInstance().getLoadedRegisteredUsers() + " osu! players";
 		}
 	}),
 	REFRESH(new Callable<String>() {
 		public String call() {
-			return "tracking every " + "0" + " seconds";
+			OsuRefreshRunnable trackingRunnable = OsuTrackingManager.getInstance().getRefreshRunnable(0);
+			
+			if(trackingRunnable != null) {
+				long averageRefreshDelay = trackingRunnable.getAverageUserRefreshDelay();
+				
+				if(averageRefreshDelay > 0) {
+					long averageLoopLength = trackingRunnable.getInitialUserListSize() * averageRefreshDelay;
+					return "tracking every " + TimeUtils.toDuration(averageLoopLength, false);
+				}
+			}
+			
+			return "Loading tracking...";
 		}
 	});
 	

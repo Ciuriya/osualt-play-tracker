@@ -27,8 +27,8 @@ public class DatabaseManager {
 		return m_databases.get(p_databaseName);
 	}
 	
-	public void setup(String p_databaseName, String p_jdbcUrl, String p_user, String p_pass) {
-		m_databases.put(p_databaseName, new Database(p_jdbcUrl, p_user, p_pass));
+	public void setup(String p_databaseName, String p_driverClass, String p_jdbcUrl, String p_user, String p_pass) {
+		m_databases.put(p_databaseName, new Database(p_driverClass, p_jdbcUrl, p_user, p_pass));
 	}
 	
 	public void close() {

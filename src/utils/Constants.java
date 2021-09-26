@@ -1,6 +1,7 @@
 package utils;
 
 import java.awt.Color;
+import java.util.TimeZone;
 
 public class Constants {
 	
@@ -15,6 +16,12 @@ public class Constants {
 	
 	// the tracking database's name
 	public static final String TRACKER_DATABASE_NAME = "osualt-tracker";
+	
+	// the osu!alt db name
+	public static final String OSUALT_REMOTE_DB_NAME = "osu";
+	
+	// the osu!alt db url
+	public static final String OSUALT_REMOTE_DB_URL = "postgresql://respektive.pw:5432";
 	
 	// the default color used on embeds
 	public static final Color DEFAULT_EMBED_COLOR = Color.CYAN;
@@ -39,6 +46,19 @@ public class Constants {
 	// the fibonacci sequence up to 21
 	public static final int[] FIBONACCI = new int[] { 1, 1, 2, 3, 5, 8, 13, 21 };
 	
+	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
+	// and the refresh frequency of the cycle
+	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
+		new long[] {3600, 0}, // 1h / not needed
+		new long[] {259200, 600}, // 3d / 10m
+		new long[] {604800, 1200}, // 7d / 20m
+		new long[] {2592000, 1800} // 31d / 30m
+	};
+	
+	// the osu!api's endpoint url
 	public static final String OSU_API_ENDPOINT_URL = "https://osu.ppy.sh/api/";
+	
+	// the default timezone used everywhere to do time comparisons
+	public static final TimeZone DEFAULT_TIMEZONE = TimeZone.getTimeZone("UTC");
 	
 }

@@ -17,6 +17,7 @@ import managers.ThreadingManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import osu.api.OsuRequestRegulator;
+import osu.tracking.OsuTrackingManager;
 import utils.Constants;
 import utils.FileUtils;
 import utils.TimeUtils;
@@ -38,12 +39,21 @@ public class Main {
 		Log.init(""); // setup the logging system
 		FileUtils.writeToFile(new File("codes.txt"), "0", false); // update the wrapper
 		
-		Log.log(Level.INFO, "Setting up database...");
+		Log.log(Level.INFO, "Setting up databases...");
 		
 		// connect to the sql database
 		JSONObject loginInfo = new JSONObject(FileUtils.readFile(new File("login.txt")));
-		DatabaseManager.getInstance().setup(Constants.TRACKER_DATABASE_NAME, "jdbc:mysql://localhost/" + Constants.TRACKER_DATABASE_NAME, 
-											loginInfo.getString("sqlUser"), loginInfo.getString("sqlPass"));
+		DatabaseManager databaseManager = DatabaseManager.getInstance();
+		
+		databaseManager.setup(Constants.TRACKER_DATABASE_NAME, 
+							  "com.mysql.cj.jdbc.Driver",
+							  "jdbc:mysql://localhost/" + Constants.TRACKER_DATABASE_NAME, 
+							  loginInfo.getString("sqlUser"), loginInfo.getString("sqlPass"));
+		
+		databaseManager.setup(Constants.OSUALT_REMOTE_DB_NAME, 
+							  "org.postgresql.Driver",
+							  "jdbc:" + Constants.OSUALT_REMOTE_DB_URL + "/" + Constants.OSUALT_REMOTE_DB_NAME, 
+							  loginInfo.getString("osuAltSqlUser"), loginInfo.getString("osuAltSqlPass"));
 		
 		Log.log(Level.INFO, "Logging into discord...");
 		
@@ -64,6 +74,7 @@ public class Main {
 		
 		Constants.OSU_API_KEY = loginInfo.getString("osuApiKey");
 		OsuRequestRegulator.getInstance();
+		OsuTrackingManager.getInstance();
 		
 		Log.log(Level.INFO, "Setting up commands...");
 		

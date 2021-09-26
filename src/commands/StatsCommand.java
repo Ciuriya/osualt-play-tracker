@@ -4,8 +4,11 @@ import data.CommandCategory;
 import managers.ApplicationStats;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import osu.tracking.OsuRefreshRunnable;
+import osu.tracking.OsuTrackingManager;
 import utils.Constants;
 import utils.DiscordChatUtils;
+import utils.GeneralUtils;
 import utils.TimeUtils;
 
 public class StatsCommand extends Command {
@@ -21,6 +24,7 @@ public class StatsCommand extends Command {
 	public void onCommand(MessageReceivedEvent p_event, String[] args) {
 		EmbedBuilder builder = new EmbedBuilder();
 		ApplicationStats stats = ApplicationStats.getInstance();
+		OsuTrackingManager osuTrackManager = OsuTrackingManager.getInstance();
 		
 		builder.setColor(m_category.getColor());
 		builder.setFooter(Constants.DEFAULT_FOOTER);
@@ -28,15 +32,33 @@ public class StatsCommand extends Command {
 						  p_event.getJDA().getSelfUser().getAvatarUrl());
 		builder.setDescription("**__" + TimeUtils.toDuration(stats.getUptime(), false) + "__** uptime");
 		
-		builder.addField("Startup Time", TimeUtils.toDuration(stats.getStartupTime(), true), false);
+		builder.addField("Startup Time", TimeUtils.toDuration(stats.getStartupTime(), true), true);
+		
 		builder.addField("osu! api/html status", (stats.isOsuApiStalled() ? "Paused" : "Running") +
 												 " / " +
-												 (stats.isOsuHtmlStalled() ? "Paused" : "Running"), false);
-		builder.addField("osu! api/html loads", stats.getOsuApiLoad() + "/" + stats.getOsuHtmlLoad(), false);
+												 (stats.isOsuHtmlStalled() ? "Paused" : "Running"), true);
+		builder.addField("osu! api/html loads", GeneralUtils.df(stats.getOsuApiLoad(), 2) + " / " + 
+												GeneralUtils.df(stats.getOsuHtmlLoad(), 2), true);
 		builder.addField("o!api requests sent/failed", 
-						 stats.getOsuApiRequestsSent() + "/" + stats.getOsuApiRequestsFailed(), false);
+						 stats.getOsuApiRequestsSent() + " / " + stats.getOsuApiRequestsFailed(), true);
 		builder.addField("o!html requests sent/failed", 
-						 stats.getOsuHtmlRequestsSent() + "/" + stats.getOsuHtmlRequestsFailed(), false);
+						 stats.getOsuHtmlRequestsSent() + " / " + stats.getOsuHtmlRequestsFailed(), true);
+		
+		builder.addField("Total registered osu! users", String.valueOf(osuTrackManager.getLoadedRegisteredUsers()), false);
+		
+		for(int i = 0; i < Constants.OSU_ACTIVITY_CYCLES.length; ++i) {
+			OsuRefreshRunnable cycleRunnable = osuTrackManager.getRefreshRunnable(i);
+			String fieldText = "Not running";
+			
+			if(cycleRunnable != null) {
+				fieldText = cycleRunnable.getUsersLeft() + " / ";
+				fieldText += cycleRunnable.getInitialUserListSize() + " / ";
+				fieldText += TimeUtils.toDuration(cycleRunnable.getAverageUserRefreshDelay(), false) + " / ";
+				fieldText += TimeUtils.toDuration(cycleRunnable.getExpectedTimeUntilStop(), false);
+			}
+			
+			builder.addField("Cycle " + i + " users left/total users/avg user delay/time left", fieldText, false);
+		}
 		
 		DiscordChatUtils.embed(p_event.getChannel(), builder.build());
 	}

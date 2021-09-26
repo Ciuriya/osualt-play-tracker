@@ -27,6 +27,8 @@ public class TimeUtils {
         if(seconds > 0) display += seconds + "s";
         if(millis > 0 && p_displayMs) display += millis + "ms";
         
+        if(display.isEmpty()) display = p_displayMs ? "0ms" : "0s";
+        
         return display;
 	}
 }

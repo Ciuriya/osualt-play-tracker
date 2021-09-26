@@ -1,5 +1,6 @@
 package managers;
 
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -36,6 +37,6 @@ public class DiscordActivityManager {
 				
 				m_currentIndex++;
 			}
-		}, 0, Constants.ACTIVITY_ROTATION_INTERVAL * 1000);
+		}, 0, (Constants.ACTIVITY_ROTATION_INTERVAL + new Random().nextInt(15)) * 1000);
 	}
 }
