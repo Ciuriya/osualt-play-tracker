@@ -1,8 +1,12 @@
 package osu.tracking;
 
 import java.util.LinkedList;
+import java.util.logging.Level;
 
-public class OsuRefreshRunnable implements Runnable {
+import data.Log;
+import utils.GeneralUtils;
+
+public abstract class OsuRefreshRunnable implements Runnable {
 
 	protected LinkedList<OsuTrackedUser> m_usersToRefresh;
 	protected int m_initialUserListSize;
@@ -22,7 +26,46 @@ public class OsuRefreshRunnable implements Runnable {
 	@Override
 	public void run() {
 		m_lastStartTime = System.currentTimeMillis();
+		
+		try {
+			for(;;) {
+				if(m_usersToRefresh.size() == 0) break;
+	
+				OsuTrackedUser user = m_usersToRefresh.removeFirst();
+				int usersLeft = m_usersToRefresh.size();
+				long currentTime = System.currentTimeMillis();
+				long nextDelay = (m_lastStartTime + m_runnableRefreshDelay - currentTime) / (usersLeft == 0 ? 1 : usersLeft);
+	
+				if(!user.isFetching()) {
+					user.setIsFetching(true);
+					
+					refreshUser(user);
+					
+					user.setLastUpdateTime();
+					user.updateActivityCycle();
+					user.updateDatabaseEntry();
+					
+					user.setIsFetching(false);
+				}
+				
+				long updatedDelay = nextDelay - (System.currentTimeMillis() - currentTime);
+				if(m_runnableRefreshDelay > 0 && updatedDelay > 0)
+					GeneralUtils.sleep((int) updatedDelay);
+			}
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "osu!refresh runnable exception | cycle: " + m_activityCycle, e);
+		}
+		
+		long time = System.currentTimeMillis();
+		long expectedEndTime = m_lastStartTime + m_runnableRefreshDelay;
+		if(expectedEndTime > time) {
+			GeneralUtils.sleep((int) (expectedEndTime - time));
+		}
+		
+		callStart();
 	}
+	
+	public abstract void refreshUser(OsuTrackedUser p_user);
 	
 	public int getInitialUserListSize() {
 		return m_initialUserListSize;
@@ -43,11 +86,24 @@ public class OsuRefreshRunnable implements Runnable {
 	}
 	
 	public long getExpectedTimeUntilStop() {
+		if(m_runnableRefreshDelay == 0) {
+			return getTimeUntilStop();
+		}
+		
 		return m_lastStartTime + m_runnableRefreshDelay - System.currentTimeMillis();
 	}
 	
 	public long getTimeElapsed() {
 		return System.currentTimeMillis() - m_lastStartTime;
+	}
+	
+	public long getTimeUntilUserRefresh(String p_userId) {
+		LinkedList<OsuTrackedUser> userListCopy = new LinkedList<>(m_usersToRefresh);
+		for(int i = 0; i < userListCopy.size(); ++i)
+			if(userListCopy.get(i).getUserId() == p_userId)
+				return i * getAverageUserRefreshDelay();
+		
+		return -1;
 	}
 	
 	public int getActivityCycle() {

@@ -26,16 +26,16 @@ public class OsuSetProfileCommand extends Command {
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent p_event, String[] args) {
-		if(args.length == 0) {
+	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
+		if(p_args.length == 0) {
 			sendInvalidArgumentsError(p_event.getChannel());
 			return;
 		}
 		
 		String username = "";
 		
-		for(int i = 0; i < args.length; ++i) {
-			username += " " + args[i];
+		for(int i = 0; i < p_args.length; ++i) {
+			username += " " + p_args[i];
 		}
 		
 		username = username.substring(1);

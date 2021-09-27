@@ -130,6 +130,7 @@ public abstract class Command {
 	public static void registerCommands() {
 		new HelpCommand();
 		new OsuSetProfileCommand();
+		new OsuStatusCommand();
 		new StatsCommand();
 		new StopCommand();
 	}

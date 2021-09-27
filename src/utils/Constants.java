@@ -46,6 +46,9 @@ public class Constants {
 	// the fibonacci sequence up to 21
 	public static final int[] FIBONACCI = new int[] { 1, 1, 2, 3, 5, 8, 13, 21 };
 	
+	// interval between osu registered user refreshes
+	public static final int OSU_REGISTERED_USER_REFRESH_INTERVAL = 600;
+	
 	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {

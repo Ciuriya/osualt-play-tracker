@@ -21,8 +21,10 @@ public class Database {
 			m_connectionPool.setMinPoolSize(5);
 			m_connectionPool.setInitialPoolSize(5);
 			m_connectionPool.setAcquireIncrement(1);
-			m_connectionPool.setMaxPoolSize(20);
+			m_connectionPool.setMaxPoolSize(50);
 			m_connectionPool.setUnreturnedConnectionTimeout(1200);
+			m_connectionPool.setTestConnectionOnCheckin(true);
+			m_connectionPool.setTestConnectionOnCheckout(true);
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Could not initialize SQL connection pool for: " + p_jdbcUrl, e);
 		}

@@ -26,12 +26,14 @@ public class OsuTrackedUser {
 	private int m_activityCycle = 0;
 	
 	private boolean m_isFetching;
+	private boolean m_isDeleted;
 
 	public OsuTrackedUser(String p_userId, int p_mode, int p_playcount) {
 		m_userId = p_userId;
 		m_mode = p_mode;
 		m_playcount = p_playcount;
 		m_isFetching = false;
+		m_isDeleted = false;
 		
 		setLastActiveTime();
 		setLastUpdateTime();
@@ -41,6 +43,9 @@ public class OsuTrackedUser {
 	}
 	
 	public OsuTrackedUser(ResultSet p_resultSet) throws SQLException {
+		m_isFetching = false;
+		m_isDeleted = false;
+		
 		loadFromSql(p_resultSet);
 		updateActivityCycle();
 	}
@@ -86,6 +91,10 @@ public class OsuTrackedUser {
 		return m_isFetching;
 	}
 	
+	public boolean isDeleted() {
+		return m_isDeleted;
+	}
+	
 	public void setPlaycount(int p_playcount) {
 		m_playcount = p_playcount;
 	}
@@ -121,6 +130,10 @@ public class OsuTrackedUser {
 		m_isFetching = p_isFetching;
 	}
 	
+	public void setIsDeleted(boolean p_isDeleted) {
+		m_isDeleted = p_isDeleted;
+	}
+	
 	public int updateActivityCycle() {
 		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 		long currentTimeMs = calendar.getTime().getTime();
@@ -138,6 +151,8 @@ public class OsuTrackedUser {
 	}
 	
 	public void updateDatabaseEntry() {
+		if(m_isDeleted) return;
+		
 		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 		Connection conn = db.getConnection();
 		
@@ -148,17 +163,7 @@ public class OsuTrackedUser {
 								   "VALUES (?, 0, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE " +
 								   "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
 			
-			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
-
-			st.setInt(1, GeneralUtils.stringToInt(getUserId()));
-			st.setInt(2, getPlaycount());
-			st.setTimestamp(3, getLastActiveTime(), calendar);
-			st.setTimestamp(4, getLastUpdateTime(), calendar);
-			st.setTimestamp(5, getLastUploadedTime(), calendar);
-			st.setInt(6, getPlaycount());
-			st.setTimestamp(7, getLastActiveTime(), calendar);
-			st.setTimestamp(8, getLastUpdateTime(), calendar);
-			st.setTimestamp(9, getLastUploadedTime(), calendar);
+			addDatabaseEntryToUserUpdatePreparedStatement(st);
 			
 			st.executeUpdate();
 			st.close();
@@ -167,5 +172,21 @@ public class OsuTrackedUser {
 		} finally {
 			db.closeConnection(conn);
 		}
+	}
+	
+	public void addDatabaseEntryToUserUpdatePreparedStatement(PreparedStatement p_statement) throws Exception {
+		if(m_isDeleted) return;
+		
+		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
+
+		p_statement.setInt(1, GeneralUtils.stringToInt(getUserId()));
+		p_statement.setInt(2, getPlaycount());
+		p_statement.setTimestamp(3, getLastActiveTime(), calendar);
+		p_statement.setTimestamp(4, getLastUpdateTime(), calendar);
+		p_statement.setTimestamp(5, getLastUploadedTime(), calendar);
+		p_statement.setInt(6, getPlaycount());
+		p_statement.setTimestamp(7, getLastActiveTime(), calendar);
+		p_statement.setTimestamp(8, getLastUpdateTime(), calendar);
+		p_statement.setTimestamp(9, getLastUploadedTime(), calendar);
 	}
 }

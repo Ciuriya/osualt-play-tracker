@@ -7,6 +7,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -14,7 +16,6 @@ import org.json.JSONObject;
 
 import data.Database;
 import data.Log;
-import managers.ApplicationStats;
 import managers.DatabaseManager;
 import managers.ThreadingManager;
 import osu.api.OsuRequestRegulator;
@@ -22,7 +23,6 @@ import osu.api.requests.OsuUserRequest;
 import utils.Constants;
 import utils.GeneralUtils;
 import utils.OsuUtils;
-import utils.TimeUtils;
 
 public class OsuTrackingManager {
 	
@@ -48,12 +48,23 @@ public class OsuTrackingManager {
 				loadRegisteredUsers();
 				refreshRegisteredUsers();
 				startLoops();
+				
+				long registeredUserRefreshInterval = Constants.OSU_REGISTERED_USER_REFRESH_INTERVAL * 1000;
+				new Timer().scheduleAtFixedRate(new TimerTask() {
+					public void run() {
+						refreshRegisteredUsers();
+					}
+				}, registeredUserRefreshInterval, registeredUserRefreshInterval);
 			}
 		}, 3600 * 1000, true);
 	}
 	
 	public int getLoadedRegisteredUsers() {
 		return m_loadedUsers.size();
+	}
+	
+	public OsuTrackedUser getUser(String p_userId) {
+		return m_loadedUsers.stream().filter(u -> u.getUserId().contentEquals(p_userId)).findFirst().orElse(null);
 	}
 	
 	public OsuRefreshRunnable getRefreshRunnable(int p_cycle) {
@@ -68,7 +79,7 @@ public class OsuTrackingManager {
 			long cutoff = cycle[0] * 1000;
 			long refreshDelay = cycle[1] * 1000;
 			
-			OsuRefreshRunnable runnable = refreshDelay > 0 ? new OsuActivityRunnable(i, refreshDelay) : new OsuTrackingRunnable(i, cutoff);
+			OsuRefreshRunnable runnable = refreshDelay > 0 ? new OsuActivityRunnable(i, refreshDelay) : new OsuTrackingRunnable(i, 0);
 			m_refreshRunnables.add(runnable);
 			
 			startLoop(runnable, refreshDelay == 0 ? cutoff : refreshDelay);
@@ -147,13 +158,13 @@ public class OsuTrackingManager {
 		return users;
 	}
 	
-	private void updateRegisteredUsers(List<Integer> users, List<Integer> removedUsers) {	
-		ApplicationStats stats = ApplicationStats.getInstance();
-		stats.startTimer();
-		
-		if(!users.isEmpty()) {
+	private void updateRegisteredUsers(List<Integer> p_users, List<Integer> p_removedUsers) {	
+		if(!p_users.isEmpty()) {
 			Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 			Connection conn = db.getConnection();
+			
+			List<Integer> newUserIds = new ArrayList<>(p_users);
+			newUserIds.removeAll(m_loadedUserIds);
 			
 			try {
 				PreparedStatement osuUserInsertSt = conn.prepareStatement(
@@ -164,9 +175,6 @@ public class OsuTrackingManager {
 													  "(`id`, `mode`, `playcount`, `last-active`, `last-update`, `last-uploaded`) " +
 													  "VALUES (?, 0, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE " +
 													  "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
-				
-				List<Integer> newUserIds = new ArrayList<>(users);
-				newUserIds.removeAll(m_loadedUserIds);
 				
 				for(int userId : newUserIds) {
 					OsuUserRequest userRequest = new OsuUserRequest(String.valueOf(userId), "0");
@@ -213,14 +221,14 @@ public class OsuTrackingManager {
 				Log.log(Level.SEVERE, "Failed to update registered users in local database", e);
 			}
 		
-			if(!removedUsers.isEmpty()) {
+			if(!p_removedUsers.isEmpty()) {
 				try {
 					PreparedStatement userDeleteSt = conn.prepareStatement(
 													 "DELETE FROM `tracked-osu-user` WHERE `id`=? AND `mode`=0");
 					PreparedStatement playDeleteSt = conn.prepareStatement(
 													 "DELETE FROM `osu-play` WHERE `user_id`=?");
 	
-					for(int userId : removedUsers) {
+					for(int userId : p_removedUsers) {
 						userDeleteSt.setInt(1, userId);
 						userDeleteSt.addBatch();
 						
@@ -237,13 +245,22 @@ public class OsuTrackingManager {
 					Log.log(Level.SEVERE, "Failed to update registered users in local database", e);
 				}
 				
-				m_loadedUserIds.removeAll(removedUsers);
-				m_loadedUsers.removeIf(u -> removedUsers.contains(GeneralUtils.stringToInt(u.getUserId())));
+				m_loadedUserIds.removeAll(p_removedUsers);
+				
+				List<OsuTrackedUser> removedTrackedUsers = m_loadedUsers.stream().filter(u -> p_removedUsers.contains(GeneralUtils.stringToInt(u.getUserId())))
+																				 .collect(Collectors.toList());
+				
+				for(OsuTrackedUser removed : removedTrackedUsers) {
+					removed.setIsDeleted(true);
+				}
+				
+				m_loadedUsers.removeAll(removedTrackedUsers);
 			}
 			
 			db.closeConnection(conn);
+			
+			Log.log(Level.INFO, "Updated registered users: " + p_users.size() + " users, " + newUserIds.size() + " added, " + 
+																							 p_removedUsers.size() + " removed");
 		}
-		
-		Log.log(Level.INFO, "Updated registered users in " + TimeUtils.toDuration(stats.stopTimer(), true));
 	}
 }

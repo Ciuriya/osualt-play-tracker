@@ -17,7 +17,7 @@ public class StopCommand extends Command {
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent p_event, String[] args) {
+	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
 		String alias = p_event.getMessage().getContentRaw().toLowerCase();
 		int code = 1;
 		

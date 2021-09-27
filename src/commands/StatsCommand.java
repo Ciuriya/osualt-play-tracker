@@ -21,7 +21,7 @@ public class StatsCommand extends Command {
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent p_event, String[] args) {
+	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
 		EmbedBuilder builder = new EmbedBuilder();
 		ApplicationStats stats = ApplicationStats.getInstance();
 		OsuTrackingManager osuTrackManager = OsuTrackingManager.getInstance();
@@ -53,7 +53,7 @@ public class StatsCommand extends Command {
 			if(cycleRunnable != null) {
 				fieldText = cycleRunnable.getUsersLeft() + " / ";
 				fieldText += cycleRunnable.getInitialUserListSize() + " / ";
-				fieldText += TimeUtils.toDuration(cycleRunnable.getAverageUserRefreshDelay(), false) + " / ";
+				fieldText += TimeUtils.toDuration(cycleRunnable.getAverageUserRefreshDelay(), true) + " / ";
 				fieldText += TimeUtils.toDuration(cycleRunnable.getTimeElapsed(), false) + " / ";
 				
 				

@@ -21,14 +21,14 @@ public class HelpCommand extends Command {
 	}
 
 	@Override
-	public void onCommand(MessageReceivedEvent p_event, String[] args) {
+	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
 		EmbedBuilder builder = new EmbedBuilder();
 		
 		builder.setColor(m_category.getColor());
 		builder.setFooter(Constants.DEFAULT_FOOTER);
 		
-		if(args.length > 0) {
-			Command cmd = Command.findCommand(args[0]);
+		if(p_args.length > 0) {
+			Command cmd = Command.findCommand(p_args[0]);
 			
 			if(cmd != null) {
 				if(!cmd.canUse(p_event.getAuthor(), p_event.getChannel())) return;

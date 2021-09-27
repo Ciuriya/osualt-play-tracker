@@ -9,13 +9,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 	}
 
 	@Override
-	public void run() {
-		super.run();
-		
-		// idk things
-		
-		GeneralUtils.sleep((int) m_runnableRefreshDelay);
-		
-		callStart();
+	public void refreshUser(OsuTrackedUser p_user) {
+		GeneralUtils.sleep(2500);
 	}
 }
