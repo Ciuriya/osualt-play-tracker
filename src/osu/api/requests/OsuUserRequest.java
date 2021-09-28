@@ -8,6 +8,7 @@ import org.json.JSONObject;
 import osu.api.OsuApiManager;
 import osu.api.OsuRequest;
 import osu.api.OsuRequestTypes;
+import utils.GeneralUtils;
 import utils.HtmlUtils;
 
 public class OsuUserRequest extends OsuRequest {
@@ -56,7 +57,7 @@ public class OsuUserRequest extends OsuRequest {
 	private void sendHtml(String[] p_args) throws Exception {
 		String[] htmlPage = HtmlUtils.getHTMLPage("https://osu.ppy.sh/pages/include/profile-general.php?u=" + p_args[0] + "&m=" + p_args[1]);
 		JSONObject user = new JSONObject();
-		user.put("user_id", p_args[0]);
+		user.put("id", GeneralUtils.stringToInt(p_args[0]));
 		user.put("general_page", htmlPage);
 
 		String userLine = HtmlUtils.getFirstMatchingLineFromHtmlPage(htmlPage, 0, "&find=");
