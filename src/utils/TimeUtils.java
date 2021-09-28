@@ -39,7 +39,7 @@ public class TimeUtils {
 	}
 	
 	public static String toDate(long time) {
-		return toDate(time, "yyyy/MM/dd HH:mm");
+		return toDate(time, "yyyy-MM-dd HH:mm:ss");
 	}
 	
 	public static String toDate(long time, String format) {
@@ -55,7 +55,7 @@ public class TimeUtils {
 	}
 	
 	public static long toTime(String date){
-		return toTime(date, "yyyy/MM/dd HH:mm");
+		return toTime(date, "yyyy-MM-dd HH:mm:ss");
 	}
 	
 	public static long toTime(String date, String format){
@@ -71,5 +71,26 @@ public class TimeUtils {
 		}
 		
 		return time;
+	}
+	
+	public static long timezoneOffsetToTime(String p_timezoneOffset) {
+		String cleanOffsetString = p_timezoneOffset.replace(":", "");
+		
+		int hours = 0;
+		int minutes = 0;
+		for(int i = 0; i < cleanOffsetString.length(); ++i) {
+			char digitCharacter = cleanOffsetString.charAt(i);
+			int digit = Integer.parseInt(String.valueOf(digitCharacter));
+			
+			if(i < 2) {
+				int mult = (1 - i) * 10;
+				hours += digit * (mult == 0 ? 1 : mult);
+			} else {
+				int mult = (3 - i) * 10;
+				minutes += digit * (mult == 0 ? 1 : mult);
+			}
+		}
+		
+		return TimeUnit.HOURS.toMillis(hours) + TimeUnit.MINUTES.toMillis(minutes);
 	}
 }

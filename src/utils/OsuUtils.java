@@ -67,7 +67,7 @@ public class OsuUtils {
 		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 			JSONObject userJson = (JSONObject) userObject;
 			
-			return userJson.getString("user_id");
+			return userJson.getString("id");
 		}
 		
 		return "";

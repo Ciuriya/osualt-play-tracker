@@ -16,6 +16,7 @@ import managers.DiscordActivityManager;
 import managers.ThreadingManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import osu.api.OsuApiManager;
 import osu.api.OsuRequestRegulator;
 import osu.tracking.OsuTrackingManager;
 import utils.Constants;
@@ -73,6 +74,7 @@ public class Main {
 		Log.log(Level.INFO, "Setting up osu!");
 		
 		Constants.OSU_API_KEY = loginInfo.getString("osuApiKey");
+		OsuApiManager.getInstance().authenticate(loginInfo.getString("osuApiV2ClientSecret"));
 		OsuRequestRegulator.getInstance();
 		OsuTrackingManager.getInstance();
 		

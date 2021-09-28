@@ -53,9 +53,9 @@ public class Constants {
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
 		new long[] {3600, 0}, // 1h / not needed
-		new long[] {259200, 600}, // 3d / 10m
-		new long[] {604800, 1200}, // 7d / 20m
-		new long[] {2592000, 1800} // 31d / 30m
+		new long[] {259200, 1800}, // 3d / 30m
+		new long[] {604800, 2700}, // 7d / 45m
+		new long[] {2592000, 3600} // 31d / 60m
 	};
 	
 	// the osu!api's endpoint url
@@ -64,4 +64,6 @@ public class Constants {
 	// the default timezone used everywhere to do time comparisons
 	public static final TimeZone DEFAULT_TIMEZONE = TimeZone.getTimeZone("UTC");
 	
+	// days before a play is DELETED from the db
+	public static final long OSU_PLAY_PRUNE_DELAY = 7;
 }

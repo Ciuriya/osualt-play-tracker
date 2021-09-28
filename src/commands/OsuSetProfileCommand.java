@@ -72,7 +72,6 @@ public class OsuSetProfileCommand extends Command {
 			
 			st.executeUpdate();
 			st.close();
-			db.closeConnection(conn);
 		} catch(Exception e) {
 			db.closeConnection(conn);
 			

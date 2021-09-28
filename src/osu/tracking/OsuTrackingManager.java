@@ -4,7 +4,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
@@ -19,6 +18,7 @@ import data.Log;
 import managers.DatabaseManager;
 import managers.ThreadingManager;
 import osu.api.OsuRequestRegulator;
+import osu.api.OsuRequestTypes;
 import osu.api.requests.OsuUserRequest;
 import utils.Constants;
 import utils.GeneralUtils;
@@ -79,7 +79,7 @@ public class OsuTrackingManager {
 			long cutoff = cycle[0] * 1000;
 			long refreshDelay = cycle[1] * 1000;
 			
-			OsuRefreshRunnable runnable = refreshDelay > 0 ? new OsuActivityRunnable(i, refreshDelay) : new OsuTrackingRunnable(i, 0);
+			OsuRefreshRunnable runnable = new OsuTrackingRunnable(i, refreshDelay > 0 ? refreshDelay : 0);
 			m_refreshRunnables.add(runnable);
 			
 			startLoop(runnable, refreshDelay == 0 ? cutoff : refreshDelay);
@@ -177,7 +177,7 @@ public class OsuTrackingManager {
 													  "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
 				
 				for(int userId : newUserIds) {
-					OsuUserRequest userRequest = new OsuUserRequest(String.valueOf(userId), "0");
+					OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, String.valueOf(userId), "0");
 					Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 30000, true);
 					
 					if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
@@ -190,7 +190,7 @@ public class OsuTrackingManager {
 						
 						osuUserInsertSt.addBatch();
 						
-						OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, userJson.getInt("playcount"));
+						OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, userJson.getJSONObject("statistics").getInt("play_count"));
 						m_loadedUsers.add(user);
 						m_loadedUserIds.add(userId);
 					}
@@ -198,19 +198,9 @@ public class OsuTrackingManager {
 				
 				osuUserInsertSt.executeBatch();
 				osuUserInsertSt.close();
-					
-				Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 				
 				for(OsuTrackedUser user : m_loadedUsers) {
-					trackUserUpdateSt.setInt(1, GeneralUtils.stringToInt(user.getUserId()));
-					trackUserUpdateSt.setInt(2, user.getPlaycount());
-					trackUserUpdateSt.setTimestamp(3, user.getLastActiveTime(), calendar);
-					trackUserUpdateSt.setTimestamp(4, user.getLastUpdateTime(), calendar);
-					trackUserUpdateSt.setTimestamp(5, user.getLastUploadedTime(), calendar);
-					trackUserUpdateSt.setInt(6, user.getPlaycount());
-					trackUserUpdateSt.setTimestamp(7, user.getLastActiveTime(), calendar);
-					trackUserUpdateSt.setTimestamp(8, user.getLastUpdateTime(), calendar);
-					trackUserUpdateSt.setTimestamp(9, user.getLastUploadedTime(), calendar);
+					user.addDatabaseEntryToUserUpdatePreparedStatement(trackUserUpdateSt);
 					
 					trackUserUpdateSt.addBatch();
 				}

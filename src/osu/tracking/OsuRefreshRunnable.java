@@ -74,7 +74,7 @@ public abstract class OsuRefreshRunnable implements Runnable {
 	public int getUsersLeft() {
 		return m_usersToRefresh.size();
 	}
-	
+
 	public long getAverageUserRefreshDelay() {
 		int usersRefreshed = getInitialUserListSize() - getUsersLeft();
 		
@@ -93,6 +93,10 @@ public abstract class OsuRefreshRunnable implements Runnable {
 		return m_lastStartTime + m_runnableRefreshDelay - System.currentTimeMillis();
 	}
 	
+	public long getRefreshDelay() {
+		return m_runnableRefreshDelay;
+	}
+	
 	public long getTimeElapsed() {
 		return System.currentTimeMillis() - m_lastStartTime;
 	}
@@ -104,6 +108,10 @@ public abstract class OsuRefreshRunnable implements Runnable {
 				return i * getAverageUserRefreshDelay();
 		
 		return -1;
+	}
+	
+	public void removeUser(String p_userId) {
+		m_usersToRefresh.removeIf(u -> u.getUserId().contentEquals(p_userId));
 	}
 	
 	public int getActivityCycle() {

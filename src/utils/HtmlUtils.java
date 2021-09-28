@@ -67,7 +67,7 @@ public class HtmlUtils {
 			connection.setRequestProperty("charset", "utf-8");
 			connection.setRequestProperty("Content-Length", "" + Integer.toString(p_params.getBytes().length));
 			connection.setDoOutput(true);
-			
+
 			if(p_query.length() > 0) connection.getOutputStream().write(p_query.getBytes("UTF8"));
 			
 			BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
@@ -90,7 +90,7 @@ public class HtmlUtils {
 		
 		return answer;
 	}
-	
+
 	public static String getFirstMatchingLineFromHtmlPage(String[] p_htmlPage, int p_offsetLines, String... p_matchers) {
 		for(int i = 0; i < p_htmlPage.length; ++i)
 			for(String matcher : p_matchers)

@@ -24,6 +24,7 @@ public class OsuTrackedUser {
 	private Timestamp m_lastUploadedTime;
 	
 	private int m_activityCycle = 0;
+	private boolean m_justMovedCycles = false;
 	
 	private boolean m_isFetching;
 	private boolean m_isDeleted;
@@ -95,6 +96,10 @@ public class OsuTrackedUser {
 		return m_isDeleted;
 	}
 	
+	public boolean justMovedCycles() {
+		return m_justMovedCycles;
+	}
+	
 	public void setPlaycount(int p_playcount) {
 		m_playcount = p_playcount;
 	}
@@ -108,13 +113,14 @@ public class OsuTrackedUser {
 		m_lastActiveTime = p_timestamp;
 	}
 	
-	public void setLastUpdateTime() {				
+	public void setLastUpdateTime() {
 		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 		setLastUpdateTime(new Timestamp(calendar.getTime().getTime()));
 	}
 	
 	public void setLastUpdateTime(Timestamp p_timestamp) {
 		m_lastUpdateTime = p_timestamp;
+		m_justMovedCycles = false;
 	}
 	
 	public void setLastUploadedTime() {				
@@ -137,6 +143,7 @@ public class OsuTrackedUser {
 	public int updateActivityCycle() {
 		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 		long currentTimeMs = calendar.getTime().getTime();
+		long prevCycle = m_activityCycle;
 		
 		m_activityCycle = 0;
 		for(long[] cycle : Constants.OSU_ACTIVITY_CYCLES)
@@ -147,14 +154,17 @@ public class OsuTrackedUser {
 		if(m_activityCycle >= Constants.OSU_ACTIVITY_CYCLES.length)
 			m_activityCycle = Constants.OSU_ACTIVITY_CYCLES.length - 1;
 		
+		if(prevCycle != m_activityCycle) m_justMovedCycles = true;
+		
 		return m_activityCycle;
 	}
 	
-	public void updateDatabaseEntry() {
-		if(m_isDeleted) return;
+	public boolean updateDatabaseEntry() {
+		if(m_isDeleted) return false;
 		
 		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 		Connection conn = db.getConnection();
+		boolean updated = false;
 		
 		try {
 			PreparedStatement st = conn.prepareStatement(
@@ -167,11 +177,15 @@ public class OsuTrackedUser {
 			
 			st.executeUpdate();
 			st.close();
+			
+			updated = true;
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Failed to update registered user (" + getUserId() + ") in local database", e);
 		} finally {
 			db.closeConnection(conn);
 		}
+		
+		return updated;
 	}
 	
 	public void addDatabaseEntryToUserUpdatePreparedStatement(PreparedStatement p_statement) throws Exception {

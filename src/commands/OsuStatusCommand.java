@@ -18,37 +18,15 @@ public class OsuStatusCommand extends Command {
 			  "Shows tracking status for the registered osu! player.", 
 			  "Shows tracking information for the registered osu! player.",
 			  new String[]{"osustatus", "Shows the tracking info for the osu! player linked to the discord user using this command"},
-			  new String[]{"osustatus <osu! name>", "Shows the tracking info for the given osu! player" +
+			  new String[]{"osustatus <osu! name>", "Shows the tracking info for the given osu! player\n" +
 													"Example: **`{prefix}osustatus nathan on osu`**"});
 	}
 
 	@Override
 	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
-		String userId = "";
+		String userId = getUserIdFromArgsSimple(p_event, p_args);
 		
-		if(p_args.length > 0) {
-			String username = "";
-			
-			for(int i = 0; i < p_args.length; ++i) {
-				username += " " + p_args[i];
-			}
-			
-			userId = OsuUtils.getOsuPlayerIdFromUsernameWithSql(username.substring(1));
-		} else {
-			userId = OsuUtils.getOsuPlayerIdFromDiscordUserId(p_event.getAuthor().getId());
-			
-			if(userId.contentEquals("")) {
-				DiscordChatUtils.message(p_event.getChannel(), "No osu! player is linked to this discord user!\n" + 
-															   "Please use **`osuset your username here`** to link an osu! player or " + 
-															   "simply add a username to this command like so: **`osustatus your username here`**");
-				return;
-			}
-		}
-		
-		if(userId.contentEquals("")) {
-			DiscordChatUtils.message(p_event.getChannel(), "This osu! player isn't registered!");
-			return;
-		}
+		if(userId.isEmpty()) return;
 		
 		EmbedBuilder builder = new EmbedBuilder();
 		OsuTrackingManager osuTrackManager = OsuTrackingManager.getInstance();
@@ -93,12 +71,19 @@ public class OsuStatusCommand extends Command {
 		
 		if(timeUntilRefresh == -1) {
 			timeUntilRefresh = refreshRunnable.getExpectedTimeUntilStop();
-			refreshTimeAddedText = "during the next cycle starting in ";
+			
+			String cycleLengthText = user.getActivityCycle() > 0 ? "(**" + TimeUtils.toDuration(refreshRunnable.getRefreshDelay(), false) + "** long)" :
+																   "";
+			refreshTimeAddedText = "during the next cycle " + cycleLengthText + " starting in ";
 		} else {
 			refreshTimeAddedText = "in ";
 		}
 		
 		descriptionText += "\nRefreshing " + refreshTimeAddedText + "**" + TimeUtils.toDuration(timeUntilRefresh, false) + "**";
+		
+		if(user.getActivityCycle() > 0)
+			descriptionText += "\nUse **`" + Constants.DEFAULT_PREFIX + "osutrack`** to manually enter the live tracking cycle";
+
 		builder.setDescription(descriptionText);
 		
 		builder.addField("Scores last uploaded on", TimeUtils.toDate(user.getLastUploadedTime().getTime()) + " UTC", false);

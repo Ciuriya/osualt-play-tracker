@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import utils.Constants;
 import utils.DiscordChatUtils;
+import utils.OsuUtils;
 
 public abstract class Command {
 	
@@ -127,10 +128,41 @@ public abstract class Command {
 	
 	public abstract void onCommand(MessageReceivedEvent p_event, String[] args);
 	
+	public String getUserIdFromArgsSimple(MessageReceivedEvent p_event, String[] p_args) {
+		String userId = "";
+		
+		if(p_args.length > 0) {
+			String username = "";
+			
+			for(int i = 0; i < p_args.length; ++i) {
+				username += " " + p_args[i];
+			}
+			
+			userId = OsuUtils.getOsuPlayerIdFromUsername(username.substring(1), true);
+		} else {
+			userId = OsuUtils.getOsuPlayerIdFromDiscordUserId(p_event.getAuthor().getId());
+			
+			if(userId.contentEquals("")) {
+				DiscordChatUtils.message(p_event.getChannel(), "No osu! player is linked to this discord user!\n" + 
+															   "Please use **`" + Constants.DEFAULT_PREFIX + "osuset your username here`** to link " + 
+															   "an osu! player or simply add a username to this command like so: " + 
+															   "**`" + Constants.DEFAULT_PREFIX + getTriggers()[0] + " your username here`**");
+				return userId;
+			}
+		}
+		
+		if(userId.contentEquals("")) {
+			DiscordChatUtils.message(p_event.getChannel(), "This osu! player isn't registered!");
+		}
+		
+		return userId;
+	}
+	
 	public static void registerCommands() {
 		new HelpCommand();
 		new OsuSetProfileCommand();
 		new OsuStatusCommand();
+		new OsuTrackCommand();
 		new StatsCommand();
 		new StopCommand();
 	}
