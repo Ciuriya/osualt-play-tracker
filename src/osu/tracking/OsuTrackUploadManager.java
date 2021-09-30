@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 
 import data.Database;
 import data.Log;
+import managers.ApplicationStats;
 import managers.DatabaseManager;
 import osu.api.Mods;
 import utils.Constants;
@@ -111,6 +112,8 @@ public class OsuTrackUploadManager {
 			st.close();
 
 			m_playsToUpload.removeAll(excluded);
+			
+			ApplicationStats.getInstance().addScoresUploaded(m_playsToUpload.size());
 			
 			OsuPlay.setUploaded(m_playsToUpload.stream().collect(Collectors.toList()));
 			m_playsToUpload.clear();

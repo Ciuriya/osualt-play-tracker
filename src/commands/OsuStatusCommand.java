@@ -112,6 +112,7 @@ public class OsuStatusCommand extends Command {
 				scoresText += "\n[" + play.getTitle() + "](https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + ")";
 				scoresText += " " + Mods.getModDisplay(Mods.getModsFromBit(play.getEnabledMods()));
 				scoresText += "\n" + (play.isUploaded() ? ":white_check_mark:" : ":x:");
+				scoresText += " | " + TimeUtils.toDuration(System.currentTimeMillis() - play.getDatePlayed().getTime(), false) + " ago";
 				scoresText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
 				scoresText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");
 				scoresText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "SS" : "FC") : play.getCombo() + "x");

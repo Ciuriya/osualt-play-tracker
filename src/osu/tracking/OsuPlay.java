@@ -44,6 +44,7 @@ public class OsuPlay {
 	private double m_accuracy;
 	
 	private boolean m_canUploadRankedStatus;
+	private long m_bestId;
 	
 	public OsuPlay(JSONObject p_jsonPlay) {
 		loadFromJson(p_jsonPlay);
@@ -55,6 +56,8 @@ public class OsuPlay {
 	
 	private void loadFromJson(JSONObject p_jsonPlay) {
 		try {
+			m_bestId = p_jsonPlay.optLong("best_id", 0);
+			
 			JSONObject statisticsObject = p_jsonPlay.getJSONObject("statistics");
 			JSONObject beatmapObject = p_jsonPlay.getJSONObject("beatmap");
 			JSONObject beatmapSetObject = p_jsonPlay.getJSONObject("beatmapset");
@@ -348,6 +351,10 @@ public class OsuPlay {
 	
 	public boolean canUploadRankedStatus() {
 		return m_canUploadRankedStatus;
+	}
+	
+	public long getBestId() {
+		return m_bestId;
 	}
 	
 	public void setUploaded(boolean p_uploaded) {

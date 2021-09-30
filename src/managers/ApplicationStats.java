@@ -17,6 +17,8 @@ public class ApplicationStats {
 	private int m_osuHtmlRequestsSent;
 	private int m_osuHtmlRequestsFailed;
 	
+	private int m_scoresUploaded;
+	
 	public static ApplicationStats getInstance() {
 		if(instance == null) instance = new ApplicationStats();
 		
@@ -101,6 +103,14 @@ public class ApplicationStats {
 	
 	public void addOsuHtmlRequestFailed() {
 		m_osuHtmlRequestsFailed++;
+	}
+	
+	public int getScoresUploaded() {
+		return m_scoresUploaded;
+	}
+	
+	public void addScoresUploaded(int p_scoresUploaded) {
+		m_scoresUploaded += p_scoresUploaded;
 	}
 	
 	// a timer to count the time something takes in code

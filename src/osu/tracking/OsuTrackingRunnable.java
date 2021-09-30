@@ -32,6 +32,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 				JSONArray array = (JSONArray) requestObject;
 				
 				List<OsuPlay> playsToUpload = new ArrayList<>();
+				Timestamp lastFetchedDate = p_user.getLastUpdateTime();
 				Timestamp latestPlayDate = p_user.getLastUpdateTime();
 				int addedPlaycount = 0;
 
@@ -39,17 +40,17 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 					OsuPlay play = new OsuPlay(array.optJSONObject(i));
 					Timestamp datePlayed = play.getDatePlayed();
 					
-					if(datePlayed.after(latestPlayDate)) {
+					if(datePlayed != null && datePlayed.after(latestPlayDate)) {
 						++addedPlaycount;
 						
-						if(play.getScoreId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus())
+						if(play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus())
 							playsToUpload.add(play);
 					}
 					
-					if(i == 0) latestPlayDate = datePlayed;
+					if(datePlayed != null) lastFetchedDate = datePlayed;
 				}
-
-				p_user.setLastUpdateTime(latestPlayDate);
+				
+				p_user.setLastUpdateTime(lastFetchedDate);
 				
 				if(p_user.justMovedCycles())
 					updateUserPlaycount(p_user);
