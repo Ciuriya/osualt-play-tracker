@@ -20,7 +20,7 @@ public class DatabaseManager {
 	public DatabaseManager() {
 		m_databases = new HashMap<>();
 		
-		System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "INFO");
+		System.setProperty("com.mchange.v2.log.FallbackMLog.DEFAULT_CUTOFF_LEVEL", "WARNING");
 	}
 	
 	public Database get(String p_databaseName) {

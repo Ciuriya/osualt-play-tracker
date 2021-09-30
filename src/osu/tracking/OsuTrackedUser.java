@@ -5,7 +5,11 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.logging.Level;
 
 import data.Database;
@@ -21,6 +25,7 @@ public class OsuTrackedUser {
 	private int m_playcount;
 	private Timestamp m_lastActiveTime;
 	private Timestamp m_lastUpdateTime;
+	private Timestamp m_lastRefreshTime; // THIS IS RUNTIME-ONLY, NOT SAVED
 	private Timestamp m_lastUploadedTime;
 	
 	private int m_activityCycle = 0;
@@ -28,6 +33,8 @@ public class OsuTrackedUser {
 	
 	private boolean m_isFetching;
 	private boolean m_isDeleted;
+
+	private List<OsuPlay> m_cachedLatestPlays = new ArrayList<>();
 
 	public OsuTrackedUser(String p_userId, int p_mode, int p_playcount) {
 		m_userId = p_userId;
@@ -38,6 +45,7 @@ public class OsuTrackedUser {
 		
 		setLastActiveTime();
 		setLastUpdateTime();
+		setLastRefreshTime();
 		setLastUploadedTime();
 		
 		updateActivityCycle();
@@ -58,6 +66,8 @@ public class OsuTrackedUser {
 		m_lastUpdateTime = p_resultSet.getTimestamp(4);
 		m_lastUploadedTime = p_resultSet.getTimestamp(5);
 		m_playcount = p_resultSet.getInt(6);
+		
+		setLastRefreshTime();
 	}
 	
 	public String getUserId() {
@@ -80,6 +90,10 @@ public class OsuTrackedUser {
 		return m_lastUpdateTime;
 	}
 	
+	public Timestamp getLastRefreshTime() {
+		return m_lastRefreshTime;
+	}
+	
 	public Timestamp getLastUploadedTime() {
 		return m_lastUploadedTime;
 	}
@@ -98,6 +112,63 @@ public class OsuTrackedUser {
 	
 	public boolean justMovedCycles() {
 		return m_justMovedCycles;
+	}
+	
+	public List<OsuPlay> getCachedLatestPlays(int p_amount) {
+		p_amount = Math.min(p_amount, Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
+		
+		if(p_amount <= m_cachedLatestPlays.size())
+			return m_cachedLatestPlays.subList(0, p_amount);
+		else {
+			Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+			Connection conn = db.getConnection();
+			List<OsuPlay> fetchedPlays = new ArrayList<>();
+			
+			try {
+				PreparedStatement st = conn.prepareStatement(
+									   "SELECT * FROM `osu-play` WHERE `user_id`=? ORDER BY `date_played` DESC LIMIT " + 
+									   Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
+				
+				st.setInt(1, GeneralUtils.stringToInt(m_userId));
+				
+				ResultSet rs = st.executeQuery();
+		
+				while(rs.next()) {
+					long scoreId = rs.getLong(1);
+
+					if(!m_cachedLatestPlays.stream().anyMatch(p -> p.getScoreId() == scoreId))
+						fetchedPlays.add(new OsuPlay(rs));
+				}
+				
+				rs.close();
+				st.close();
+			} catch(Exception e) {
+				Log.log(Level.SEVERE, "Could not fetch latest plays from sql for user: " + m_userId, e);
+			} finally {
+				db.closeConnection(conn);
+			}
+			
+			addPlaysToCache(fetchedPlays);
+			
+			return m_cachedLatestPlays;
+		}
+	}
+	
+	public void addPlayToCache(OsuPlay p_play) {
+		addPlaysToCache(Collections.singletonList(p_play));
+	}
+	
+	public void addPlaysToCache(List<OsuPlay> p_plays) {
+		m_cachedLatestPlays.addAll(p_plays);
+		m_cachedLatestPlays.sort(new Comparator<OsuPlay>() {
+			@Override
+			public int compare(OsuPlay o1, OsuPlay o2) {
+				return o2.getDatePlayed().compareTo(o1.getDatePlayed());
+			}
+		});
+		
+		if(m_cachedLatestPlays.size() > Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT) 
+			m_cachedLatestPlays = m_cachedLatestPlays.subList(0, Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
 	}
 	
 	public void setPlaycount(int p_playcount) {
@@ -120,7 +191,11 @@ public class OsuTrackedUser {
 	
 	public void setLastUpdateTime(Timestamp p_timestamp) {
 		m_lastUpdateTime = p_timestamp;
-		m_justMovedCycles = false;
+	}
+	
+	public void setLastRefreshTime() {
+		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
+		m_lastRefreshTime = new Timestamp(calendar.getTime().getTime());
 	}
 	
 	public void setLastUploadedTime() {				
@@ -140,6 +215,10 @@ public class OsuTrackedUser {
 		m_isDeleted = p_isDeleted;
 	}
 	
+	public void setJustMovedCycles(boolean p_justMovedCycles) {
+		m_justMovedCycles = p_justMovedCycles;
+	}
+
 	public int updateActivityCycle() {
 		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 		long currentTimeMs = calendar.getTime().getTime();

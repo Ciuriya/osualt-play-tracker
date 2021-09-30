@@ -61,7 +61,7 @@ public class OsuUtils {
 	// if implementing this for rBot, please look into caching osu calls like this one so that they don't need
 	// to be made multiple times unless absolutely necessary
 	public static String getOsuPlayerIdFromUsernameWithApi(String p_username, boolean p_priority) {
-		OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, p_username, "0", "string");
+		OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, p_username, "0", "username");
 		Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 10000, p_priority);
 		
 		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
@@ -115,6 +115,10 @@ public class OsuUtils {
 	}
 	
 	public static String getOsuPlayerIdFromDiscordUserId(String p_discordId) {
+		return getOsuPlayerIdFromDiscordUserId(p_discordId, false);
+	}
+	
+	public static String getOsuPlayerIdFromDiscordUserId(String p_discordId, boolean p_silenceErrors) {
 		String playerId = "";
 		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 		Connection conn = db.getConnection();
@@ -132,7 +136,8 @@ public class OsuUtils {
 			rs.close();
 			st.close();
 		} catch(Exception e) {
-			Log.log(Level.SEVERE, "Could not fetch osu! player id with discord user from sql: " + p_discordId, e);
+			if(!p_silenceErrors)
+				Log.log(Level.SEVERE, "Could not fetch osu! player id with discord user from sql: " + p_discordId, e);
 		} finally {
 			db.closeConnection(conn);
 		}

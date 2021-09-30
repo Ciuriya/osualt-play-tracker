@@ -40,6 +40,10 @@ public class OsuPlay {
 	private boolean m_replayAvailable;
 	private boolean m_uploaded;
 	private Timestamp m_insertionDate;
+	private String m_title;
+	private double m_accuracy;
+	
+	private boolean m_canUploadRankedStatus;
 	
 	public OsuPlay(JSONObject p_jsonPlay) {
 		loadFromJson(p_jsonPlay);
@@ -50,44 +54,56 @@ public class OsuPlay {
 	}
 	
 	private void loadFromJson(JSONObject p_jsonPlay) {
-		m_scoreId = p_jsonPlay.optLong("id", 0);
-		m_userId = String.valueOf(p_jsonPlay.optLong("user_id", 0));
-		m_beatmapId = p_jsonPlay.optJSONObject("beatmap").optInt("id", 0);
-		m_score = p_jsonPlay.optLong("score", 0);
-		
-		JSONObject statisticsObject = p_jsonPlay.optJSONObject("statistics");
-		
-		m_count300 = statisticsObject.optInt("count_300", 0);
-		m_count100 = statisticsObject.optInt("count_100", 0);
-		m_count50 = statisticsObject.optInt("count_50", 0);
-		m_countMiss = statisticsObject.optInt("count_miss", 0);
-		m_combo = p_jsonPlay.optInt("max_combo", 0);
-		m_perfect = p_jsonPlay.optBoolean("perfect", false);
-		
-		JSONArray modArray = p_jsonPlay.optJSONArray("mods");
-		
-		if(modArray != null) {
-			List<String> modShortNames = new ArrayList<>();
+		try {
+			JSONObject statisticsObject = p_jsonPlay.getJSONObject("statistics");
+			JSONObject beatmapObject = p_jsonPlay.getJSONObject("beatmap");
+			JSONObject beatmapSetObject = p_jsonPlay.getJSONObject("beatmapset");
 			
-			for(int i = 0; i < modArray.length(); ++i)
-				modShortNames.add(modArray.optString(i, ""));
+			m_scoreId = p_jsonPlay.optLong("id", 0);
+			m_userId = String.valueOf(p_jsonPlay.optLong("user_id", 0));
+			m_beatmapId = p_jsonPlay.optJSONObject("beatmap").optInt("id", 0);
+			m_score = p_jsonPlay.optLong("score", 0);
+			m_count300 = statisticsObject.optInt("count_300", 0);
+			m_count100 = statisticsObject.optInt("count_100", 0);
+			m_count50 = statisticsObject.optInt("count_50", 0);
+			m_countMiss = statisticsObject.optInt("count_miss", 0);
+			m_combo = p_jsonPlay.optInt("max_combo", 0);
+			m_perfect = p_jsonPlay.optBoolean("perfect", false);
 			
-			m_enabledMods = Mods.getBitFromShortNames(modShortNames);
-		} else m_enabledMods = 0;
-		
-		// 2007-01-01T12:34:56+00:00 could be + or -
-		String datePlayedString = "2007-01-01 00:00:00+00:00";
-		boolean positiveTimezone = datePlayedString.contains("+");
-		String[] timezoneSplit = datePlayedString.split(positiveTimezone ? "\\+" : "-");
-		long timezoneOffset = TimeUtils.timezoneOffsetToTime(timezoneSplit[positiveTimezone ? 1 : timezoneSplit.length - 1]);
-		
-		timezoneOffset *= positiveTimezone ? 1 : -1;
-		datePlayedString = datePlayedString.substring(0, datePlayedString.lastIndexOf(positiveTimezone ? "+" : "-"));
-
-		m_datePlayed = new Timestamp(TimeUtils.toTime(datePlayedString) - timezoneOffset);
-		m_rank = p_jsonPlay.optString("rank", "F");
-		m_pp = p_jsonPlay.optDouble("pp", 0);
-		m_replayAvailable = p_jsonPlay.optBoolean("replay", false);
+			JSONArray modArray = p_jsonPlay.optJSONArray("mods");
+			
+			if(modArray != null) {
+				List<String> modShortNames = new ArrayList<>();
+				
+				for(int i = 0; i < modArray.length(); ++i)
+					modShortNames.add(modArray.optString(i, ""));
+				
+				m_enabledMods = Mods.getBitFromShortNames(modShortNames);
+			} else m_enabledMods = 0;
+			
+			// 2007-01-01T12:34:56+00:00 could be + or -
+			String datePlayedString = p_jsonPlay.optString("created_at", "2007-01-01T00:00:00+00:00").replace("T", " ");
+			boolean positiveTimezone = datePlayedString.contains("+");
+			String[] timezoneSplit = datePlayedString.split(positiveTimezone ? "\\+" : "-");
+			long timezoneOffset = TimeUtils.timezoneOffsetToTime(timezoneSplit[positiveTimezone ? 1 : timezoneSplit.length - 1]);
+			
+			timezoneOffset *= positiveTimezone ? 1 : -1;
+			datePlayedString = datePlayedString.substring(0, datePlayedString.lastIndexOf(positiveTimezone ? "+" : "-"));
+	
+			m_datePlayed = new Timestamp(TimeUtils.toTime(datePlayedString) - timezoneOffset);
+			m_rank = p_jsonPlay.optString("rank", "F");
+			m_pp = p_jsonPlay.optDouble("pp", 0);
+			m_replayAvailable = p_jsonPlay.optBoolean("replay", false);
+			m_title = beatmapSetObject.optString("artist", "") + " - " + beatmapSetObject.optString("title", "") + " [" + beatmapObject.optString("version", "") + "]";
+			m_accuracy = p_jsonPlay.optDouble("accuracy", 1);
+			
+			if(m_title.length() > 255) m_title = m_title.substring(0, 255);
+			
+			String status = beatmapObject.optString("status", "");
+			m_canUploadRankedStatus = status.equalsIgnoreCase("ranked") || status.equalsIgnoreCase("loved") || status.equalsIgnoreCase("approved");
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "Failed to load play from json", e);
+		}
 	}
 	
 	private void loadFromSql(ResultSet p_resultSet) throws SQLException {
@@ -108,9 +124,35 @@ public class OsuPlay {
 		m_replayAvailable = p_resultSet.getBoolean(15);
 		m_uploaded = p_resultSet.getBoolean(16);
 		m_insertionDate = p_resultSet.getTimestamp(17);
+		m_title = p_resultSet.getString(18);
+		m_accuracy = p_resultSet.getDouble(19);
 	}
 	
-	public void saveToDatabase() {
+	public static List<OsuPlay> getPlaysToUpload() {
+		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Connection conn = db.getConnection();
+		List<OsuPlay> fetchedPlays = new ArrayList<>();
+		
+		try {
+			PreparedStatement st = conn.prepareStatement(
+								   "SELECT * FROM `osu-play` WHERE `uploaded`=0");
+			
+			ResultSet rs = st.executeQuery();
+	
+			while(rs.next()) fetchedPlays.add(new OsuPlay(rs));
+			
+			rs.close();
+			st.close();
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "Could not fetch latest non-uploaded plays", e);
+		} finally {
+			db.closeConnection(conn);
+		}
+		
+		return fetchedPlays;
+	}
+	
+	public static void saveToDatabase(List<OsuPlay> p_plays) {
 		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 		Connection conn = db.getConnection();
 		
@@ -119,42 +161,46 @@ public class OsuPlay {
 								   "INSERT IGNORE INTO `osu-play` " +
 								   "(`score_id`, `user_id`, `beatmap_id`, `score`, `count300`, `count100`, `count50`, `countmiss`, " + 
 								   "`combo`, `perfect`, `enabled_mods`, `date_played`, `rank`, `pp`, `replay_available`, `uploaded`, " + 
-								   "`insertion-date`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-			
-			st.setLong(1, m_scoreId);
-			st.setInt(2, GeneralUtils.stringToInt(m_userId));
-			st.setLong(3, m_beatmapId);
-			st.setLong(4, m_score);
-			st.setInt(5, m_count300);
-			st.setInt(6, m_count100);
-			st.setInt(7, m_count50);
-			st.setInt(8, m_countMiss);
-			st.setInt(9, m_combo);
-			st.setBoolean(10, m_perfect);
-			st.setLong(11, m_enabledMods);
-			st.setTimestamp(12, m_datePlayed);
-			st.setString(13, m_rank);
-			st.setDouble(14, m_pp);
-			st.setBoolean(15, m_replayAvailable);
-			st.setBoolean(16, m_uploaded);
+								   "`insertion-date`, `title`, `accuracy`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
-			m_insertionDate = new Timestamp(calendar.getTime().getTime());
+			for(OsuPlay play : p_plays) {
+				st.setLong(1, play.m_scoreId);
+				st.setInt(2, GeneralUtils.stringToInt(play.m_userId));
+				st.setLong(3, play.m_beatmapId);
+				st.setLong(4, play.m_score);
+				st.setInt(5, play.m_count300);
+				st.setInt(6, play.m_count100);
+				st.setInt(7, play.m_count50);
+				st.setInt(8, play.m_countMiss);
+				st.setInt(9, play.m_combo);
+				st.setBoolean(10, play.m_perfect);
+				st.setLong(11, play.m_enabledMods);
+				st.setTimestamp(12, play.m_datePlayed, calendar);
+				st.setString(13, play.m_rank);
+				st.setDouble(14, play.m_pp);
+				st.setBoolean(15, play.m_replayAvailable);
+				st.setBoolean(16, play.m_uploaded);
+
+				play.m_insertionDate = new Timestamp(calendar.getTime().getTime());
+				
+				st.setTimestamp(17, play.m_insertionDate);
+				st.setString(18, play.m_title);
+				st.setDouble(19, play.m_accuracy);
+				
+				st.addBatch();
+			}
 			
-			st.setTimestamp(17, m_insertionDate);
-			
-			st.executeUpdate();
+			st.executeBatch();
 			st.close();
 		} catch(Exception e) {
-			Log.log(Level.SEVERE, "Failed to insert play, score id: " + m_scoreId, e);
+			Log.log(Level.SEVERE, "Failed to insert " + p_plays.size() + " plays", e);
 		} finally {
 			db.closeConnection(conn);
 		}
 	}
 	
-	public void setUploaded() {
-		m_uploaded = true;
-		
+	public static void setUploaded(List<OsuPlay> p_plays) {	
 		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 		Connection conn = db.getConnection();
 		
@@ -162,14 +208,43 @@ public class OsuPlay {
 			PreparedStatement st = conn.prepareStatement(
 								   "UPDATE `osu-play` SET `uploaded`=? WHERE `score_id`=? AND `score`=?");
 			
-			st.setBoolean(1, true);
-			st.setLong(2, m_scoreId);
-			st.setLong(3, m_score);
+			for(OsuPlay play : p_plays) {
+				st.setBoolean(1, true);
+				st.setLong(2, play.m_scoreId);
+				st.setLong(3, play.m_score);
 			
-			st.executeUpdate();
+				st.addBatch();
+				
+				play.setUploaded(true);
+			}
+			
+			st.executeBatch();
 			st.close();
 		} catch(Exception e) {
-			Log.log(Level.SEVERE, "Failed to update play's uploaded status, score id: " + m_scoreId, e);
+			Log.log(Level.SEVERE, "Failed to update the uploaded status of " + p_plays.size() + " plays", e);
+		} finally {
+			db.closeConnection(conn);
+		}
+	}
+	
+	public static void deletePlays(List<OsuPlay> p_plays) {
+		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Connection conn = db.getConnection();
+		
+		try {
+			PreparedStatement st = conn.prepareStatement(
+								   "DELETE FROM `osu-play` WHERE `score_id`=?");
+			
+			for(OsuPlay play : p_plays) {
+				st.setLong(1, play.getScoreId());
+				
+				st.addBatch();
+			}
+			
+			st.executeBatch();
+			st.close();
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "Failed to delete " + p_plays.size() + " plays", e);
 		} finally {
 			db.closeConnection(conn);
 		}
@@ -180,9 +255,11 @@ public class OsuPlay {
 		Connection conn = db.getConnection();
 		
 		try {
+			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 			PreparedStatement st = conn.prepareStatement(
 								   "DELETE FROM `osu-play` WHERE `insertion-date` < " + 
-								   "UNIX_TIMESTAMP(DATE_SUB(NOW(), INTERVAL " + Constants.OSU_PLAY_PRUNE_DELAY + " DAY))");
+								   "DATE_SUB('" + TimeUtils.toDate(calendar.getTime().getTime()) +
+								   "', INTERVAL " + Constants.OSU_PLAY_PRUNE_DELAY + " DAY)");
 
 			st.executeUpdate();
 			st.close();
@@ -259,5 +336,31 @@ public class OsuPlay {
 	
 	public Timestamp getInsertionDate() {
 		return m_insertionDate;
+	}
+	
+	public String getTitle() {
+		return m_title;
+	}
+	
+	public double getAccuracy() {
+		return m_accuracy;
+	}
+	
+	public boolean canUploadRankedStatus() {
+		return m_canUploadRankedStatus;
+	}
+	
+	public void setUploaded(boolean p_uploaded) {
+		m_uploaded = p_uploaded;
+	}
+	
+	@Override
+	public boolean equals(Object o) {
+		if(o == this) return true;
+		if(!(o instanceof OsuPlay)) return false;
+		
+		OsuPlay other = (OsuPlay) o;
+		
+		return this.getUserId().contentEquals(other.getUserId()) && this.getDatePlayed().equals(other.getDatePlayed());
 	}
 }

@@ -16,11 +16,13 @@ public abstract class OsuRefreshRunnable implements Runnable {
 	
 	private int m_activityCycle;
 	private long m_cachedAverageUserRefreshDelay;
+	private boolean m_stopping;
 	
 	public OsuRefreshRunnable(int p_activityCycle, long p_runnableRefreshDelay) {
 		m_runnableRefreshDelay = p_runnableRefreshDelay;
 		m_activityCycle = p_activityCycle;
 		m_cachedAverageUserRefreshDelay = 0;
+		m_stopping = false;
 	}
 	
 	@Override
@@ -29,6 +31,7 @@ public abstract class OsuRefreshRunnable implements Runnable {
 		
 		try {
 			for(;;) {
+				if(m_stopping) return;
 				if(m_usersToRefresh.size() == 0) break;
 	
 				OsuTrackedUser user = m_usersToRefresh.removeFirst();
@@ -39,12 +42,14 @@ public abstract class OsuRefreshRunnable implements Runnable {
 				if(!user.isFetching()) {
 					user.setIsFetching(true);
 					
-					refreshUser(user);
+					if(refreshUser(user)) {
+						user.updateActivityCycle();
+						user.updateDatabaseEntry();
+					}
 					
-					user.setLastUpdateTime();
-					user.updateActivityCycle();
-					user.updateDatabaseEntry();
+					user.setLastRefreshTime();
 					
+					user.setJustMovedCycles(false);
 					user.setIsFetching(false);
 				}
 				
@@ -65,7 +70,7 @@ public abstract class OsuRefreshRunnable implements Runnable {
 		callStart();
 	}
 	
-	public abstract void refreshUser(OsuTrackedUser p_user);
+	public abstract boolean refreshUser(OsuTrackedUser p_user);
 	
 	public int getInitialUserListSize() {
 		return m_initialUserListSize;
@@ -116,6 +121,10 @@ public abstract class OsuRefreshRunnable implements Runnable {
 	
 	public int getActivityCycle() {
 		return m_activityCycle;
+	}
+	
+	public void callStop() {
+		m_stopping = true;
 	}
 	
 	public void setUsersToRefresh(LinkedList<OsuTrackedUser> p_usersToRefresh) {

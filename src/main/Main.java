@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import osu.api.OsuApiManager;
 import osu.api.OsuRequestRegulator;
+import osu.tracking.OsuTrackUploadManager;
 import osu.tracking.OsuTrackingManager;
 import utils.Constants;
 import utils.FileUtils;
@@ -77,6 +78,7 @@ public class Main {
 		OsuApiManager.getInstance().authenticate(loginInfo.getString("osuApiV2ClientSecret"));
 		OsuRequestRegulator.getInstance();
 		OsuTrackingManager.getInstance();
+		OsuTrackUploadManager.getInstance();
 		
 		Log.log(Level.INFO, "Setting up commands...");
 		
@@ -91,17 +93,23 @@ public class Main {
 	}
 	
 	public static void stop(int p_code) {
-		ThreadingManager.getInstance().stop(5000); // ensure all threads are killed
-		DatabaseManager.getInstance().close(); // close databases
-		FileUtils.writeToFile(new File("codes.txt"), String.valueOf(p_code), false); // update the wrapper
+		OsuTrackingManager.getInstance().stop();
 		
-		discordApi.shutdown(); // log out of discord
-		
-		// delayed shutdown to give everything time to close
 		new Timer().schedule(new TimerTask() {
 			public void run() {
-				System.exit(0);
+				ThreadingManager.getInstance().stop(3500); // ensure all threads are killed
+				DatabaseManager.getInstance().close(); // close databases
+				FileUtils.writeToFile(new File("codes.txt"), String.valueOf(p_code), false); // update the wrapper
+				
+				discordApi.shutdown(); // log out of discord
+				
+				// delayed shutdown to give everything time to close
+				new Timer().schedule(new TimerTask() {
+					public void run() {
+						System.exit(0);
+					}
+				}, 1000);
 			}
-		}, 1000);
+		}, 2500);
 	}
 }

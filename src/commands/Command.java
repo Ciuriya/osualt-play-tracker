@@ -3,10 +3,12 @@ package commands;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 import data.BotAdmins;
 import data.CommandCategory;
+import data.Log;
 import managers.ThreadingManager;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.ChannelType;
@@ -114,8 +116,12 @@ public abstract class Command {
 			if(cmd.canUse(p_event.getAuthor(), p_event.getChannel())) {
 				ThreadingManager.getInstance().executeAsync(new Runnable() {
 					public void run() {
-						if(p_message.contains(" ")) cmd.onCommand(p_event, args);
-						else cmd.onCommand(p_event, new String[]{});
+						try {
+							if(p_message.contains(" ")) cmd.onCommand(p_event, args);
+							else cmd.onCommand(p_event, new String[]{});
+						} catch(Exception e) {
+							Log.log(Level.SEVERE, "Command error", e);
+						}
 					}
 				}, 30000, true);
 			}

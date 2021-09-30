@@ -29,7 +29,7 @@ public class OsuScoresRequest extends OsuRequest {
 		String scoreType = args.length >= 2 ? args[1] : "recent";
 		String limit = args.length >= 3 ? args[2] : "100";
 		String offset = args.length >= 4 ? args[3] : "0";
-		String includeFails = args.length >= 5 ? (args[4] == "true" ? "1" : "0") : "0";
+		String includeFails = args.length >= 5 ? (args[4].contentEquals("true") ? "1" : "0") : "0";
 		
 		String requestArgsString = (scoreType.contentEquals("recent") ? "include_fails=" + includeFails : "");
 		requestArgsString += "|mode=" + mode;

@@ -14,8 +14,8 @@ public class OsuTrackCommand extends Command {
 		super(null, false, true, CommandCategory.OSU, new String[]{"osutrack", "track"}, 
 			  "Lets you manually go into live tracking.", 
 			  "Allows users to skip the activity refresh and jump straight into the live tracking cycle.",
-			  new String[]{"osutrack", "Moves the osu! player linked to the discord user using this command to the live tracking cycle"},
-			  new String[]{"osutrack <osu! name>", "Moves the given osu! player to the live tracking cycle\n" +
+			  new String[]{"osutrack", "Moves the osu! player linked to the discord user using this command to the live tracking cycle."},
+			  new String[]{"osutrack <osu! name>", "Moves the given osu! player to the live tracking cycle.\n" +
 												   "Example: **`{prefix}osutrack im a super blue cat`**"});
 	}
 
@@ -35,12 +35,10 @@ public class OsuTrackCommand extends Command {
 		
 		OsuRefreshRunnable refreshRunnable = osuTrackManager.getRefreshRunnable(user.getActivityCycle());
 		
-		if(refreshRunnable != null) {
+		if(refreshRunnable != null)
 			refreshRunnable.removeUser(userId);
-		}
 		
 		user.setLastActiveTime();
-		user.setLastUpdateTime();
 		user.updateActivityCycle();
 		
 		DiscordChatUtils.message(p_event.getChannel(), "Moved " + OsuUtils.getOsuPlayerUsernameFromIdWithApi(userId, true) + 

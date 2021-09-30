@@ -53,9 +53,9 @@ public class Constants {
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
 		new long[] {3600, 0}, // 1h / not needed
-		new long[] {259200, 1800}, // 3d / 30m
-		new long[] {604800, 2700}, // 7d / 45m
-		new long[] {2592000, 3600} // 31d / 60m
+		new long[] {259200, 2700}, // 3d / 45m
+		new long[] {604800, 3600}, // 7d / 60m
+		new long[] {2592000, 7200} // 31d / 2h
 	};
 	
 	// the osu!api's endpoint url
@@ -64,6 +64,18 @@ public class Constants {
 	// the default timezone used everywhere to do time comparisons
 	public static final TimeZone DEFAULT_TIMEZONE = TimeZone.getTimeZone("UTC");
 	
+	// how many plays can the bot fetch from the api in one call
+	public static final int OSU_RECENT_PLAYS_LIMIT = 100;
+	
+	// amount of latest plays to cache per user
+	public static final int OSU_CACHED_LATEST_PLAYS_AMOUNT = 5;
+	
+	// time in seconds before plays are uploaded to the remote server
+	public static final int OSU_PLAY_UPLOAD_INTERVAL = 60;
+	
+	// time between pruning calls
+	public static final int OSU_PLAY_PRUNING_LOOP_INTERVAL = 3600;
+	
 	// days before a play is DELETED from the db
-	public static final long OSU_PLAY_PRUNE_DELAY = 7;
+	public static final int OSU_PLAY_PRUNE_DELAY = 7;
 }

@@ -37,8 +37,10 @@ public class StatsCommand extends Command {
 		builder.addField("osu! api/html status", (stats.isOsuApiStalled() ? "Paused" : "Running") +
 												 " / " +
 												 (stats.isOsuHtmlStalled() ? "Paused" : "Running"), true);
-		builder.addField("osu! api/html sent last minute", GeneralUtils.df(Constants.OSU_API_REQUESTS_PER_MINUTE * stats.getOsuApiLoad(), 2) + " / " + 
-														   GeneralUtils.df(Constants.OSU_HTML_REQUESTS_PER_MINUTE * stats.getOsuHtmlLoad(), 2), true);
+		builder.addField("osu! api/html sent last minute", GeneralUtils.toFormattedNumber(Constants.OSU_API_REQUESTS_PER_MINUTE * 
+																						  stats.getOsuApiLoad()) + " / " + 
+														   GeneralUtils.toFormattedNumber(Constants.OSU_HTML_REQUESTS_PER_MINUTE * 
+																   						  stats.getOsuHtmlLoad()), true);
 		builder.addField("o!api requests sent/failed", 
 						 stats.getOsuApiRequestsSent() + " / " + stats.getOsuApiRequestsFailed(), true);
 		builder.addField("o!html requests sent/failed", 

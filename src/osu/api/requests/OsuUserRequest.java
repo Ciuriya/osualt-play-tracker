@@ -43,7 +43,7 @@ public class OsuUserRequest extends OsuRequest {
 			type = p_args[2];
 		}
 		
-		String userId = URLEncoder.encode(p_args[0], StandardCharsets.UTF_8);
+		String userId = URLEncoder.encode(p_args[0], StandardCharsets.UTF_8).replaceAll("\\+", "%20");
 		String mode = "osu";
 		String requestArgsString = "key=" + type;
 		String post = OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/" + mode, requestArgsString.split("\\|"));

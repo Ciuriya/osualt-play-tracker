@@ -55,6 +55,13 @@ public class OsuTrackingManager {
 						refreshRegisteredUsers();
 					}
 				}, registeredUserRefreshInterval, registeredUserRefreshInterval);
+				
+				long osuPlayPruningInterval = Constants.OSU_PLAY_PRUNING_LOOP_INTERVAL * 1000;
+				new Timer().scheduleAtFixedRate(new TimerTask() {
+					public void run() {
+						//OsuPlay.pruneOldPlays(); http://smcmax.com/s/2021-09-29_13-24-14.png
+					}
+				}, osuPlayPruningInterval, osuPlayPruningInterval);
 			}
 		}, 3600 * 1000, true);
 	}
@@ -90,6 +97,11 @@ public class OsuTrackingManager {
 		p_runnable.setUsersToRefresh(m_loadedUsers.stream().filter(u -> u.getActivityCycle() == p_runnable.getActivityCycle())
 														   .collect(Collectors.toCollection(LinkedList::new)));
 		ThreadingManager.getInstance().executeAsync(p_runnable, (int) p_maxDelay * 2, false);
+	}
+	
+	public void stop() {
+		for(OsuRefreshRunnable runnable : m_refreshRunnables)
+			runnable.callStop();
 	}
 	
 	private void loadRegisteredUsers() {

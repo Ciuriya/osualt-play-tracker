@@ -15,7 +15,6 @@ public class Database {
 		try {
 			m_connectionPool.setDriverClass(p_driverClass);
 			m_connectionPool.setJdbcUrl(p_jdbcUrl + "?serverTimezone=UTC");
-			m_connectionPool.setTestConnectionOnCheckout(false);
 			m_connectionPool.setUser(p_user);
 			m_connectionPool.setPassword(p_pass);
 			m_connectionPool.setMinPoolSize(5);

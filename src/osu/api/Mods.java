@@ -80,7 +80,7 @@ public enum Mods{
 		return bits;
 	}
 	
-	public static List<Mods> getModsFromBit(int p_modsUsed){
+	public static List<Mods> getModsFromBit(long p_modsUsed){
 		List<Mods> mods = new ArrayList<>();
 		long used = p_modsUsed;
 		

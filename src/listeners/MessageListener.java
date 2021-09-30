@@ -25,7 +25,7 @@ public class MessageListener extends ListenerAdapter {
 		// find and run command
 		if(Command.handleCommand(p_event, message)) {
 			Log.log(Level.INFO, "{Command received in " + DiscordChatUtils.getChannelLogString(p_event.getChannel()) + 
-					" sent by " + p_event.getAuthor().getId() + "\n" +
+					" sent by " + p_event.getAuthor().getId() + "}\n" +
 					message);
 		}
 	}
