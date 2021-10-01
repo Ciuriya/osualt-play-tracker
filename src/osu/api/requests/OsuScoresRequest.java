@@ -39,7 +39,7 @@ public class OsuScoresRequest extends OsuRequest {
 		String post = OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/scores/" + scoreType, requestArgsString.split("\\|"));
 		
 		if(post.isBlank() || !post.contains("{"))
-			setAnswer("failed");
+			setAnswer("nothing");
 		else
 			setAnswer(new JSONArray(post));
 	}

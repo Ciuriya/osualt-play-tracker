@@ -7,7 +7,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.json.JSONArray;
@@ -42,6 +44,7 @@ public class OsuPlay {
 	private Timestamp m_insertionDate;
 	private String m_title;
 	private double m_accuracy;
+	private int m_updateStatus = 0;
 	
 	private boolean m_canUploadRankedStatus;
 	private long m_bestId;
@@ -76,12 +79,22 @@ public class OsuPlay {
 			JSONArray modArray = p_jsonPlay.optJSONArray("mods");
 			
 			if(modArray != null) {
-				List<String> modShortNames = new ArrayList<>();
+				Set<String> modShortNames = new HashSet<>();
 				
 				for(int i = 0; i < modArray.length(); ++i)
 					modShortNames.add(modArray.optString(i, ""));
 				
-				m_enabledMods = Mods.getBitFromShortNames(modShortNames);
+				for(String modShortName : new ArrayList<String>(modShortNames))
+					if(modShortName.contentEquals(Mods.Nightcore.getShortName())) {
+						modShortNames.add(Mods.DoubleTime.getShortName());
+					} else if(modShortName.contentEquals(Mods.Perfect.getShortName())) {
+						modShortNames.add(Mods.SuddenDeath.getShortName());
+					}
+				
+				List<String> modNames = new ArrayList<>();
+				modNames.addAll(modShortNames);
+				
+				m_enabledMods = Mods.getBitFromShortNames(modNames);
 			} else m_enabledMods = 0;
 			
 			// 2007-01-01T12:34:56+00:00 could be + or -
@@ -129,6 +142,7 @@ public class OsuPlay {
 		m_insertionDate = p_resultSet.getTimestamp(17);
 		m_title = p_resultSet.getString(18);
 		m_accuracy = p_resultSet.getDouble(19);
+		m_updateStatus = p_resultSet.getInt(20);
 	}
 	
 	public static List<OsuPlay> getPlaysToUpload() {
@@ -164,7 +178,7 @@ public class OsuPlay {
 								   "INSERT IGNORE INTO `osu-play` " +
 								   "(`score_id`, `user_id`, `beatmap_id`, `score`, `count300`, `count100`, `count50`, `countmiss`, " + 
 								   "`combo`, `perfect`, `enabled_mods`, `date_played`, `rank`, `pp`, `replay_available`, `uploaded`, " + 
-								   "`insertion-date`, `title`, `accuracy`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+								   "`insertion-date`, `title`, `accuracy`, `upload_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 			for(OsuPlay play : p_plays) {
@@ -190,6 +204,7 @@ public class OsuPlay {
 				st.setTimestamp(17, play.m_insertionDate);
 				st.setString(18, play.m_title);
 				st.setDouble(19, play.m_accuracy);
+				st.setInt(20, play.m_updateStatus);
 				
 				st.addBatch();
 			}
@@ -203,22 +218,26 @@ public class OsuPlay {
 		}
 	}
 	
-	public static void setUploaded(List<OsuPlay> p_plays) {	
+	public static void setUploaded(List<OsuPlay> p_plays, int[] p_updateStatusList) {	
 		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
 		Connection conn = db.getConnection();
 		
 		try {
 			PreparedStatement st = conn.prepareStatement(
-								   "UPDATE `osu-play` SET `uploaded`=? WHERE `score_id`=? AND `score`=?");
+								   "UPDATE `osu-play` SET `uploaded`=?, `upload_status`=? WHERE `score_id`=? AND `score`=?");
 			
-			for(OsuPlay play : p_plays) {
+			for(int i = 0; i < p_plays.size(); ++i) {
+				OsuPlay play = p_plays.get(i);
+				
 				st.setBoolean(1, true);
-				st.setLong(2, play.m_scoreId);
-				st.setLong(3, play.m_score);
+				st.setInt(2, p_updateStatusList[i]);
+				st.setLong(3, play.m_scoreId);
+				st.setLong(4, play.m_score);
 			
 				st.addBatch();
 				
 				play.setUploaded(true);
+				play.setUpdateStatus(p_updateStatusList[i]);
 			}
 			
 			st.executeBatch();
@@ -357,8 +376,16 @@ public class OsuPlay {
 		return m_bestId;
 	}
 	
+	public int getUpdateStatus() {
+		return m_updateStatus;
+	}
+	
 	public void setUploaded(boolean p_uploaded) {
 		m_uploaded = p_uploaded;
+	}
+	
+	public void setUpdateStatus(int p_uploadStatus) {
+		m_updateStatus = p_uploadStatus;
 	}
 	
 	@Override

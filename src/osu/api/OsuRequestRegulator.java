@@ -83,6 +83,10 @@ public class OsuRequestRegulator {
 									else stats.addOsuHtmlRequestSent();
 									
 									request.send(p_isApi);
+									
+									if(request.getAnswer() instanceof String && ((String) request.getAnswer()).contentEquals("failed"))
+										throw new Exception("Request returned fail");
+									
 									break;
 								} catch(Exception e) {
 									setStalled(p_isApi, true);

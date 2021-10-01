@@ -1,5 +1,6 @@
 package commands;
 
+import java.util.Arrays;
 import java.util.List;
 
 import data.CommandCategory;
@@ -29,6 +30,13 @@ public class OsuStatusCommand extends Command {
 
 	@Override
 	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
+		boolean debug = false;
+		
+		if(p_args.length > 0 && p_args[p_args.length - 1].contentEquals("debug")) {
+			debug = true;
+			p_args = Arrays.asList(p_args).subList(0, p_args.length - 1).toArray(new String[]{});
+		}
+		
 		String userId = getUserIdFromArgsSimple(p_event, p_args);
 		
 		if(userId.isEmpty()) return;
@@ -62,7 +70,8 @@ public class OsuStatusCommand extends Command {
 			long cutoff = Constants.OSU_ACTIVITY_CYCLES[activityCycle][0] * 1000;
 			
 			cycleText = "Activity Cycle " + activityCycle + " (Inactivity >" + TimeUtils.toDuration(previousCutoff, false) + 
-															" and <" + TimeUtils.toDuration(cutoff, false) + ")";
+															(activityCycle == Constants.OSU_ACTIVITY_CYCLES.length - 1 ? 
+															")" : " and <" + TimeUtils.toDuration(cutoff, false) + ")");
 		}
 
 		String username = OsuUtils.getOsuPlayerUsernameFromIdWithApi(userId, true);
@@ -120,6 +129,9 @@ public class OsuStatusCommand extends Command {
 				
 				if(play.getPP() > 0.0) 
 					scoresText += " | " + GeneralUtils.toFormattedNumber(play.getPP()) + "pp";
+				
+				if(debug)
+					scoresText += " | Update Status: " + play.getUpdateStatus();
 			}
 			
 			scoresText = scoresText.substring(1);

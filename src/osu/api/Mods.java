@@ -96,8 +96,6 @@ public enum Mods{
 		}
 		
 		if(mods.contains(Mods.None)) mods.remove(Mods.None);
-		if(mods.contains(Mods.Nightcore)) mods.remove(Mods.DoubleTime);
-		if(mods.contains(Mods.Perfect)) mods.remove(Mods.SuddenDeath);
 		
 		return mods;
 	}
@@ -114,7 +112,15 @@ public enum Mods{
 	public static String getModDisplay(List<Mods> p_mods) {
 		String display = "";
 		
-		for(Mods mod : p_mods)
+		List<Mods> displayMods = new ArrayList<>(p_mods);
+		
+		if(displayMods.contains(Mods.Nightcore))
+			displayMods.remove(Mods.DoubleTime);
+		
+		if(displayMods.contains(Mods.Perfect))
+			displayMods.remove(Mods.SuddenDeath);
+			
+		for(Mods mod : displayMods)
 			display = mod.getShortName() + display;
 		
 		return display.length() == 0 ? "" : "+" + display;

@@ -238,11 +238,11 @@ public class OsuTrackingManager {
 						playDeleteSt.addBatch();
 					}
 					
-					userDeleteSt.executeBatch();
-					userDeleteSt.close();
-					
 					playDeleteSt.executeBatch();
 					playDeleteSt.close();
+					
+					userDeleteSt.executeBatch();
+					userDeleteSt.close();
 				} catch(Exception e) {
 					Log.log(Level.SEVERE, "Failed to update registered users in local database", e);
 				}

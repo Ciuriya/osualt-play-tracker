@@ -108,15 +108,23 @@ public class OsuTrackUploadManager {
 				st.addBatch();
 			}
 			
-			st.executeBatch();
+			int[] output = st.executeBatch();
 			st.close();
 
 			m_playsToUpload.removeAll(excluded);
 			
-			ApplicationStats.getInstance().addScoresUploaded(m_playsToUpload.size());
-			
-			OsuPlay.setUploaded(m_playsToUpload.stream().collect(Collectors.toList()));
-			m_playsToUpload.clear();
+			if(output.length != m_playsToUpload.size()) {
+				new Timer().schedule(new TimerTask() {
+					public void run() {
+						uploadQueuedPlays();
+					}
+				}, 5000);
+			} else {
+				ApplicationStats.getInstance().addScoresUploaded(m_playsToUpload.size());
+				
+				OsuPlay.setUploaded(m_playsToUpload.stream().collect(Collectors.toList()), output);
+				m_playsToUpload.clear();
+			}
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Failed to upload " + m_playsToUpload.size() + " plays to the remote database", e);
 		} finally {

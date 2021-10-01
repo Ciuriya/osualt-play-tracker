@@ -13,41 +13,33 @@ import data.Log;
 
 public class HtmlUtils {
 
-	public static String[] getHTMLPage(String p_url) {
+	public static String[] getHTMLPage(String p_url) throws Exception {
 		BufferedReader reader = null;
 		String[] htmlPage = new String[]{};
+
+		URL url = new URL(p_url.replaceAll(" ", "%20"));
+		StringBuffer page = new StringBuffer();
 		
-		try{
-			URL url = new URL(p_url.replaceAll(" ", "%20"));
-			StringBuffer page = new StringBuffer();
-			
-			URLConnection connection = url.openConnection();
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-			connection.setRequestProperty("Accept-Language", "en-US");
-			
-			if(p_url.contains("ppy.sh")) connection.addRequestProperty("Cookie", "osu_site_v=old");
-			
-			connection.setConnectTimeout(5000);
-			connection.setReadTimeout(5000);
-			
-			reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
-			
-			char[] buffer = new char[1024];
-			int charsRead = 0;
-			
-			while((charsRead = reader.read(buffer, 0, 1024)) != -1)
-				page.append(buffer, 0, charsRead);
-			
-			htmlPage = page.toString().split("\\n");
-		} catch(Exception e) {
-			Log.log(Level.INFO, "getHTML Exception: " + e.getMessage());
-		} finally {
-			try {
-				if(reader != null) reader.close();
-			} catch(Exception e) {
-				Log.log(Level.WARNING, "Could not close getHTML BufferedReader: " + e.getMessage());
-			}
-		}
+		URLConnection connection = url.openConnection();
+		connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+		connection.setRequestProperty("Accept-Language", "en-US");
+		
+		if(p_url.contains("ppy.sh")) connection.addRequestProperty("Cookie", "osu_site_v=old");
+		
+		connection.setConnectTimeout(5000);
+		connection.setReadTimeout(5000);
+		
+		reader = new BufferedReader(new InputStreamReader(connection.getInputStream(), "UTF-8"));
+		
+		char[] buffer = new char[1024];
+		int charsRead = 0;
+		
+		while((charsRead = reader.read(buffer, 0, 1024)) != -1)
+			page.append(buffer, 0, charsRead);
+		
+		htmlPage = page.toString().split("\\n");
+		
+		reader.close();
 		
 		return htmlPage;
 	}

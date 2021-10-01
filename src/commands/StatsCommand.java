@@ -74,16 +74,16 @@ public class StatsCommand extends Command {
 					expectedTimeLeftSign = "-";
 				}
 				
-				fieldText += expectedTimeLeftSign + TimeUtils.toDuration(expectedTimeLeft, false);
+				fieldText += expectedTimeLeftSign + TimeUtils.toDuration(expectedTimeLeft, false) + " left";
 				
 				if(showFullStats)
-					fieldText += " / " + TimeUtils.toDuration(cycleRunnable.getTimeUntilStop(), false);
+					fieldText += " / " + TimeUtils.toDuration(cycleRunnable.getTimeUntilStop(), false) + " left";
 			} else fieldText = "Not running";
 			
 			if(showFullStats)
 				builder.addField("Cycle " + i + " users left/total | avg delay/elapsed/expected time left/calc'd time left", fieldText, false);
 			else
-				builder.addField("Cycle " + i + " progress / time until end of cycle", fieldText, false);
+				builder.addField("Cycle " + i + " progress", fieldText, false);
 		}
 		
 		DiscordChatUtils.embed(p_event.getChannel(), builder.build());

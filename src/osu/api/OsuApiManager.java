@@ -27,7 +27,7 @@ public class OsuApiManager {
 	
 	public OsuApiManager() {}
 	
-	public String sendApiRequest(String p_requestUrl, String[] p_args) {
+	public String sendApiRequest(String p_requestUrl, String[] p_args) throws Exception {
 		String url = Constants.OSU_API_ENDPOINT_URL + "v2/" + p_requestUrl;
 		
 		for(int i = 0; i < p_args.length; ++i) {
@@ -40,7 +40,7 @@ public class OsuApiManager {
 		return sendApiPost("GET", url, "");
 	}
 	
-	public void authenticate(String p_clientSecret) {
+	public void authenticate(String p_clientSecret) throws Exception {
 		JSONObject bodyJson = new JSONObject();
 		
 		bodyJson.put("client_id", 10018);
@@ -60,7 +60,9 @@ public class OsuApiManager {
 			
 			new Timer().schedule(new TimerTask() {
 				public void run() {
-					authenticate(p_clientSecret);
+					try {
+						authenticate(p_clientSecret);
+					} catch (Exception e) {}
 				}
 			}, refreshDelay);
 		}
@@ -70,43 +72,37 @@ public class OsuApiManager {
 		else Log.log(Level.INFO, "Failed to authenticate with o!api v2!");
 	}
 	
-	private String sendApiPost(String p_requestMethod, String p_url, String p_body) {
-		try {
-			URL url = new URL(p_url);
-			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-	
-			connection.setRequestMethod(p_requestMethod);	
-			connection.setConnectTimeout(5000);
-			connection.setReadTimeout(10000);
-			connection.setRequestProperty("User-Agent", "Mozilla/5.0");
-			connection.setRequestProperty("Accept", "application/json");
-			connection.setRequestProperty("Content-Type", "application/json");
-			connection.setRequestProperty("charset", "utf-8");
-			connection.setRequestProperty("Content-Length", Integer.toString(p_body.getBytes().length));
-			
-			if(!m_accessToken.isEmpty())
-				connection.setRequestProperty("Authorization", "Bearer " + m_accessToken);
-			
-			connection.setDoInput(true);
-			connection.setDoOutput(!p_body.isEmpty());
-	
-			if(!p_body.isEmpty()) connection.getOutputStream().write(p_body.getBytes("UTF8"));
+	private String sendApiPost(String p_requestMethod, String p_url, String p_body) throws Exception {
+		URL url = new URL(p_url);
+		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
-			BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-			StringBuffer response = new StringBuffer();
-			char[] buffer = new char[1024];
-			int charsRead = 0;
-			
-			while((charsRead = inputStream.read(buffer, 0, 1024)) != -1)
-				response.append(buffer, 0, charsRead);
-			
-			inputStream.close();
-			
-			return response.toString();
-		} catch(Exception e) {
-			Log.log(Level.SEVERE, "o!api v2 post error", e);
-		}
+		connection.setRequestMethod(p_requestMethod);	
+		connection.setConnectTimeout(5000);
+		connection.setReadTimeout(10000);
+		connection.setRequestProperty("User-Agent", "Mozilla/5.0");
+		connection.setRequestProperty("Accept", "application/json");
+		connection.setRequestProperty("Content-Type", "application/json");
+		connection.setRequestProperty("charset", "utf-8");
+		connection.setRequestProperty("Content-Length", Integer.toString(p_body.getBytes().length));
 		
-		return "";
+		if(!m_accessToken.isEmpty())
+			connection.setRequestProperty("Authorization", "Bearer " + m_accessToken);
+		
+		connection.setDoInput(true);
+		connection.setDoOutput(!p_body.isEmpty());
+
+		if(!p_body.isEmpty()) connection.getOutputStream().write(p_body.getBytes("UTF8"));
+
+		BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+		StringBuffer response = new StringBuffer();
+		char[] buffer = new char[1024];
+		int charsRead = 0;
+		
+		while((charsRead = inputStream.read(buffer, 0, 1024)) != -1)
+			response.append(buffer, 0, charsRead);
+		
+		inputStream.close();
+		
+		return response.toString();
 	}
 }

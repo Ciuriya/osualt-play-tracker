@@ -90,9 +90,9 @@ public abstract class Command {
 	}
 	
 	protected void sendInvalidArgumentsError(MessageChannel p_channel) {
-		DiscordChatUtils.message(p_channel, "Invalid arguments! Use **__" + 
+		DiscordChatUtils.message(p_channel, "Invalid arguments! Use **`" + 
 								 Constants.DEFAULT_PREFIX + 
-								 "help " + m_triggers[0] + "__** for info on this command!");
+								 "help " + m_triggers[0] + "`** for info on this command!");
 	}
 	
 	public static Command findCommand(String p_trigger) {

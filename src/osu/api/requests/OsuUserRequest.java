@@ -2,9 +2,11 @@ package osu.api.requests;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.logging.Level;
 
 import org.json.JSONObject;
 
+import data.Log;
 import osu.api.OsuApiManager;
 import osu.api.OsuRequest;
 import osu.api.OsuRequestTypes;
@@ -77,7 +79,11 @@ public class OsuUserRequest extends OsuRequest {
 				statisticsObject.put("play_count", playCountLine.split("Play Count<\\/b>: ")[1].split("<\\/div>")[0].replaceAll(",", ""));
 			
 			user.put("statistics", statisticsObject);
-		} catch (Exception e) { }
+		} catch (Exception e) { 
+			Log.log(Level.SEVERE, "Error parsing user html", e);
+			setAnswer("failed");
+			return;
+		}
 
 		setAnswer(user);
 	}
