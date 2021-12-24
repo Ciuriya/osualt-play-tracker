@@ -62,6 +62,11 @@ public class OsuUserRequest extends OsuRequest {
 		user.put("id", GeneralUtils.stringToInt(p_args[0]));
 		user.put("general_page", htmlPage);
 
+		if(!HtmlUtils.getFirstMatchingLineFromHtmlPage(htmlPage, 0, "No information recorded").isEmpty()) {
+			setAnswer(user);
+			return;
+		}
+		
 		String userLine = HtmlUtils.getFirstMatchingLineFromHtmlPage(htmlPage, 0, "&find=");
 		String playCountLine = HtmlUtils.getFirstMatchingLineFromHtmlPage(htmlPage, 0, "<b>Play Count</b>");
 		

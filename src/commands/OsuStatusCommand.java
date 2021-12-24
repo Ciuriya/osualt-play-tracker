@@ -120,7 +120,7 @@ public class OsuStatusCommand extends Command {
 			for(OsuPlay play : latestFetchedScores) {
 				scoresText += "\n[" + play.getTitle() + "](https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + ")";
 				scoresText += " " + Mods.getModDisplay(Mods.getModsFromBit(play.getEnabledMods()));
-				scoresText += "\n" + (play.isUploaded() ? ":white_check_mark:" : ":x:");
+				scoresText += "\n" + (play.isUploaded() ? ":ballot_box_with_check:" : ":x:");
 				scoresText += " | " + TimeUtils.toDuration(System.currentTimeMillis() - play.getDatePlayed().getTime(), false) + " ago";
 				scoresText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
 				scoresText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");

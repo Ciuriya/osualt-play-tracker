@@ -27,7 +27,6 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 															String.valueOf(Constants.OSU_RECENT_PLAYS_LIMIT), 
 															"0", p_user.justMovedCycles() ? "false" : "true");
 			Object requestObject = OsuRequestRegulator.getInstance().sendRequestSync(request, 30000, true);
-			//boolean isMe = p_user.getUserId().contentEquals("4886116");
 
 			if(OsuUtils.isAnswerValid(requestObject, JSONArray.class)) {
 				JSONArray array = (JSONArray) requestObject;
@@ -42,12 +41,8 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 						OsuPlay play = new OsuPlay(array.optJSONObject(i));
 						Timestamp datePlayed = play.getDatePlayed();
 						
-						//if(isMe) Log.log(Level.INFO, "datePlayed: " + datePlayed);
-						
 						if(datePlayed != null && datePlayed.after(latestPlayDate)) {
 							++addedPlaycount;
-							
-							//if(isMe) Log.log(Level.INFO, "added pc");
 							
 							if(play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus())
 								playsToUpload.add(play);
@@ -62,8 +57,6 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 				if(p_user.justMovedCycles())
 					updateUserPlaycount(p_user);
 				else updateUserActivity(p_user, p_user.getPlaycount() + addedPlaycount);
-				
-				//if(isMe) Log.log(Level.INFO, "added: " + addedPlaycount + " new pc: " + p_user.getPlaycount());
 				
 				if(!playsToUpload.isEmpty()) {
 					OsuPlay.saveToDatabase(playsToUpload);
@@ -91,7 +84,8 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			JSONObject userJson = (JSONObject) userObject;
 			JSONObject statisticsObject = userJson.optJSONObject("statistics");
 			
-			return updateUserActivity(p_user, statisticsObject != null ? statisticsObject.optInt("play_count", 0) : 0);
+			updateUserActivity(p_user, statisticsObject != null ? statisticsObject.optInt("play_count", 0) : 0);
+			return true;
 		}
 		
 		return false;
