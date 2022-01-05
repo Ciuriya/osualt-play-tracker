@@ -80,8 +80,7 @@ public class OsuStatusCommand extends Command {
 						  "https://a.ppy.sh/" + user.getUserId());
 		
 		String pastRefreshName = activityCycle > 0 || user.justMovedCycles() ? "activity check" : "refresh";
-		String descriptionText = "Last " + pastRefreshName + " was **" + 
-								 TimeUtils.toDuration(System.currentTimeMillis() - user.getLastRefreshTime().getTime(), false) + "** ago";
+		String descriptionText = "Last " + pastRefreshName + " was **<t:" + (user.getLastRefreshTime().getTime() / 1000) + ":R>**";
 		
 		long timeUntilRefresh = refreshRunnable.getTimeUntilUserRefresh(user.getUserId());
 		String refreshTimeAddedText = "";
@@ -92,12 +91,10 @@ public class OsuStatusCommand extends Command {
 			String cycleLengthText = activityCycle > 0 ? "(**" + TimeUtils.toDuration(refreshRunnable.getRefreshDelay(), false) + "** long)" :
 														 "";
 			refreshTimeAddedText = "during the next cycle " + cycleLengthText + " starting in ";
-		} else {
-			refreshTimeAddedText = "in ";
 		}
 		
 		String futureRefreshName = activityCycle == 0 ? "Refreshing " : "Checking activity ";
-		descriptionText += "\n" + futureRefreshName + refreshTimeAddedText + "**" + TimeUtils.toDuration(timeUntilRefresh, false) + "**";
+		descriptionText += "\n" + futureRefreshName + refreshTimeAddedText + "**<t:" + ((System.currentTimeMillis() + timeUntilRefresh) / 1000) + ":R>**";
 		
 		if(user.getActivityCycle() > 0) {
 			String storedUserId = OsuUtils.getOsuPlayerIdFromDiscordUserId(p_event.getAuthor().getId(), true);
@@ -121,7 +118,7 @@ public class OsuStatusCommand extends Command {
 				scoresText += "\n[" + play.getTitle() + "](https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + ")";
 				scoresText += " " + Mods.getModDisplay(Mods.getModsFromBit(play.getEnabledMods()));
 				scoresText += "\n" + (play.isUploaded() ? ":ballot_box_with_check:" : ":x:");
-				scoresText += " | " + TimeUtils.toDuration(System.currentTimeMillis() - play.getDatePlayed().getTime(), false) + " ago";
+				scoresText += " | **<t:" + (play.getDatePlayed().getTime() / 1000) + ":R>**";
 				scoresText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
 				scoresText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");
 				scoresText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "SS" : "FC") : play.getCombo() + "x");

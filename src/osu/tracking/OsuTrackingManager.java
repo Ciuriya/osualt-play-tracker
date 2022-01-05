@@ -189,22 +189,28 @@ public class OsuTrackingManager {
 													  "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
 				
 				for(int userId : newUserIds) {
-					OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, String.valueOf(userId), "0");
+					OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.BOTH, String.valueOf(userId), "0");
 					Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 30000, true);
 					
 					if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 						JSONObject userJson = (JSONObject) userObject;
 						
-						String username = userJson.getString("username");
-						osuUserInsertSt.setInt(1, userId);
-						osuUserInsertSt.setString(2, username);
-						osuUserInsertSt.setString(3, username);
-						
-						osuUserInsertSt.addBatch();
-						
-						OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, userJson.getJSONObject("statistics").getInt("play_count"));
-						m_loadedUsers.add(user);
-						m_loadedUserIds.add(userId);
+						if(userJson.has("username")) {
+							String username = userJson.getString("username");
+							osuUserInsertSt.setInt(1, userId);
+							osuUserInsertSt.setString(2, username);
+							osuUserInsertSt.setString(3, username);
+							
+							osuUserInsertSt.addBatch();
+							
+							JSONObject stats = userJson.optJSONObject("statistics");
+							
+							if(stats != null) {
+								OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, stats.optInt("play_count"));
+								m_loadedUsers.add(user);
+								m_loadedUserIds.add(userId);
+							}
+						}
 					}
 				}
 				
