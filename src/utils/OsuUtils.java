@@ -62,7 +62,7 @@ public class OsuUtils {
 	// to be made multiple times unless absolutely necessary
 	public static String getOsuPlayerIdFromUsernameWithApi(String p_username, boolean p_priority) {
 		OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, p_username, "0", "username");
-		Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 10000, p_priority);
+		Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 30000, p_priority);
 		
 		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 			JSONObject userJson = (JSONObject) userObject;
@@ -103,7 +103,7 @@ public class OsuUtils {
 	// to be made multiple times unless absolutely necessary
 	public static String getOsuPlayerUsernameFromIdWithApi(String p_userId, boolean p_priority) {
 		OsuUserRequest userRequest = new OsuUserRequest(p_userId, "0");
-		Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 10000, p_priority);
+		Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 30000, p_priority);
 		
 		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 			JSONObject userJson = (JSONObject) userObject;

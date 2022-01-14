@@ -44,7 +44,7 @@ public class OsuSetProfileCommand extends Command {
 		String userDisplay = username + " (<https://osu.ppy.sh/users/" + fetchedPlayerId + ">)";
 		
 		if(fetchedPlayerId == -1) {
-			DiscordChatUtils.message(p_event.getChannel(), "This username is invalid.");
+			DiscordChatUtils.message(p_event.getChannel(), "This username is invalid. Please try again, osu!api likely timed out!");
 			return;
 		}
 		

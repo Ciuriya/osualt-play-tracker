@@ -90,7 +90,7 @@ public class OsuStatusCommand extends Command {
 			
 			String cycleLengthText = activityCycle > 0 ? "(**" + TimeUtils.toDuration(refreshRunnable.getRefreshDelay(), false) + "** long)" :
 														 "";
-			refreshTimeAddedText = "during the next cycle " + cycleLengthText + " starting in ";
+			refreshTimeAddedText = "during the next cycle " + cycleLengthText + " starting ";
 		}
 		
 		String futureRefreshName = activityCycle == 0 ? "Refreshing " : "Checking activity ";
@@ -115,20 +115,26 @@ public class OsuStatusCommand extends Command {
 			scoresText = "";
 			
 			for(OsuPlay play : latestFetchedScores) {
-				scoresText += "\n[" + play.getTitle() + "](https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + ")";
-				scoresText += " " + Mods.getModDisplay(Mods.getModsFromBit(play.getEnabledMods()));
-				scoresText += "\n" + (play.isUploaded() ? ":ballot_box_with_check:" : ":x:");
-				scoresText += " | **<t:" + (play.getDatePlayed().getTime() / 1000) + ":R>**";
-				scoresText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
-				scoresText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");
-				scoresText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "SS" : "FC") : play.getCombo() + "x");
-				scoresText += " " + play.getRank();
+				String currentScoreText = "";
+				
+				currentScoreText += "\n[" + play.getTitle() + "](https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + ")";
+				currentScoreText += " " + Mods.getModDisplay(Mods.getModsFromBit(play.getEnabledMods()));
+				currentScoreText += "\n" + (play.isUploaded() ? ":ballot_box_with_check:" : ":x:");
+				currentScoreText += " | **<t:" + (play.getDatePlayed().getTime() / 1000) + ":R>**";
+				currentScoreText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
+				currentScoreText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");
+				currentScoreText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "SS" : "FC") : play.getCombo() + "x");
+				currentScoreText += " " + play.getRank();
 				
 				if(play.getPP() > 0.0) 
-					scoresText += " | " + GeneralUtils.toFormattedNumber(play.getPP()) + "pp";
+					currentScoreText += " | " + GeneralUtils.toFormattedNumber(play.getPP()) + "pp";
 				
 				if(debug)
-					scoresText += " | Update Status: " + play.getUpdateStatus();
+					currentScoreText += " | Update Status: " + play.getUpdateStatus();
+				
+				if(scoresText.length() + currentScoreText.length() > 1000) break;
+				
+				scoresText += currentScoreText;
 			}
 			
 			scoresText = scoresText.substring(1);
