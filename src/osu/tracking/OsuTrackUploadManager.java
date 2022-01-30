@@ -2,8 +2,10 @@ package osu.tracking;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -17,6 +19,7 @@ import managers.DatabaseManager;
 import osu.api.Mods;
 import utils.Constants;
 import utils.GeneralUtils;
+import utils.OsuUtils;
 
 public class OsuTrackUploadManager {
 
@@ -40,11 +43,65 @@ public class OsuTrackUploadManager {
 					uploadQueuedPlays();
 			}
 		}, 5000, Constants.OSU_PLAY_UPLOAD_INTERVAL * 1000);
+		
+		//tempUploadLocalDiscordOsuUserLinks();
 	}
 	
 	public void addPlaysToUpload(List<OsuPlay> p_plays) {
 		m_playsToUpload.addAll(p_plays);
 	}
+
+	/*
+	private void tempUploadLocalDiscordOsuUserLinks() {
+		Database localDb = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Database remoteDb = DatabaseManager.getInstance().get(Constants.OSUALT_REMOTE_DB_NAME);
+		Connection localConn = localDb.getConnection();
+		Connection remoteConn = remoteDb.getConnection();
+
+		try {
+			PreparedStatement localSt = localConn.prepareStatement(
+			  		 					"SELECT * FROM `discord-user`");
+			PreparedStatement remoteSt = remoteConn.prepareStatement(
+					   					 "INSERT INTO discorduser (discord_id, user_id, username) " +
+					   					 "VALUES (?, ?, ?) ON CONFLICT (discord_id) DO UPDATE SET user_id=?, username=?");
+			
+			ResultSet rs = localSt.executeQuery();
+	
+			while(rs.next()) {
+				PreparedStatement usernameFetchSt = localConn.prepareStatement(
+													"SELECT `username` FROM `osu-user` WHERE `id`=?");
+	
+				usernameFetchSt.setInt(1, rs.getInt(2));
+				
+				ResultSet usernameFetchRs = usernameFetchSt.executeQuery();
+				String username = "";
+				if(usernameFetchRs.next()) username = usernameFetchRs.getString(1);
+				
+				usernameFetchRs.close();
+				usernameFetchSt.close();
+
+				remoteSt.setString(1, rs.getString(1));
+				remoteSt.setInt(2, rs.getInt(2));
+				remoteSt.setString(3, username);
+				remoteSt.setInt(4, rs.getInt(2));
+				remoteSt.setString(5, username);
+				
+				remoteSt.addBatch();
+			}
+			
+			rs.close();
+			localSt.close();
+			
+			remoteSt.executeBatch();
+			remoteSt.close();
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "import blew up uh oh", e);
+		} finally {
+			localDb.closeConnection(localConn);
+			remoteDb.closeConnection(remoteConn);
+		}
+	}
+	*/
 	
 	public void uploadQueuedPlays() {
 		Database db = DatabaseManager.getInstance().get(Constants.OSUALT_REMOTE_DB_NAME);

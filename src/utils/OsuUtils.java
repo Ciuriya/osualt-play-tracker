@@ -67,7 +67,7 @@ public class OsuUtils {
 		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 			JSONObject userJson = (JSONObject) userObject;
 			
-			return String.valueOf(userJson.optInt("id", 0));
+			return String.valueOf(userJson.optInt("id", -1));
 		}
 		
 		return "";
@@ -108,7 +108,7 @@ public class OsuUtils {
 		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 			JSONObject userJson = (JSONObject) userObject;
 			
-			return userJson.getString("username");
+			return userJson.optString("username", "");
 		}
 		
 		return "";

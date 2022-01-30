@@ -57,31 +57,37 @@ public class OsuSetProfileCommand extends Command {
 		}
 		
 		String databaseErrorMessage = "A database error occured, please try again later!\n" +
-				   					  "If this keeps occuring, make sure to contact Smc#2222 (-Skye on osu!)";
-		Database db = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
-		Connection conn = db.getConnection();
+					  				  "If this keeps occuring, make sure to contact Smc#2222 (-Skye on osu!)";
+		
+		if(updateSql(p_event, fetchedPlayerId, username.toLowerCase()))
+			DiscordChatUtils.message(p_event.getChannel(), "Your osu! profile was set to " + userDisplay);
+		else DiscordChatUtils.message(p_event.getChannel(), databaseErrorMessage);
+	}
+	
+	private boolean updateSql(MessageReceivedEvent p_event, int fetchedPlayerId, String username) {
+		Database localDb = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Connection localConn = localDb.getConnection();
 		
 		try {
-			PreparedStatement st = conn.prepareStatement(
+			PreparedStatement st = localConn.prepareStatement(
 								   "INSERT INTO `osu-user` (`id`, `username`) " +
 								   "VALUES (?, ?) ON DUPLICATE KEY UPDATE `username`=?");
 			
 			st.setInt(1, fetchedPlayerId);
-			st.setString(2, username.toLowerCase());
-			st.setString(3, username.toLowerCase());
+			st.setString(2, username);
+			st.setString(3, username);
 			
 			st.executeUpdate();
 			st.close();
 		} catch(Exception e) {
-			db.closeConnection(conn);
+			localDb.closeConnection(localConn);
 			
 			Log.log(Level.SEVERE, "Could not insert/update osu! user profile (" + fetchedPlayerId + ") SQL", e);
-			DiscordChatUtils.message(p_event.getChannel(), databaseErrorMessage);
-			return;
+			return false;
 		}
 		
 		try {
-			PreparedStatement st = conn.prepareStatement(
+			PreparedStatement st = localConn.prepareStatement(
 								   "INSERT INTO `discord-user` (`id`, `osu-id`) " +
 								   "VALUES (?, ?) ON DUPLICATE KEY UPDATE `osu-id`=?");
 			
@@ -91,15 +97,40 @@ public class OsuSetProfileCommand extends Command {
 			
 			st.executeUpdate();
 			st.close();
-			db.closeConnection(conn);
+			
+			localDb.closeConnection(localConn);
 		} catch(Exception e) {
-			db.closeConnection(conn);
+			localDb.closeConnection(localConn);
 			
 			Log.log(Level.SEVERE, "Could not insert/update discord info (" + fetchedPlayerId + ") SQL", e);
-			DiscordChatUtils.message(p_event.getChannel(), databaseErrorMessage);
-			return;
+			return false;
+		}
+
+		Database remoteDb = DatabaseManager.getInstance().get(Constants.OSUALT_REMOTE_DB_NAME);
+		Connection remoteConn = remoteDb.getConnection();
+		
+		try {
+			PreparedStatement st = remoteConn.prepareStatement(
+								   "INSERT INTO discorduser (discord_id, user_id, username) " +
+								   "VALUES (?, ?, ?) ON CONFLICT (discord_id) DO UPDATE SET user_id=?, username=?");
+			
+			st.setString(1, p_event.getAuthor().getId());
+			st.setInt(2, fetchedPlayerId);
+			st.setString(3, username);
+			st.setInt(4, fetchedPlayerId);
+			st.setString(5, username);
+			
+			st.executeUpdate();
+			st.close();
+			
+			remoteDb.closeConnection(remoteConn);
+		} catch(Exception e) {
+			remoteDb.closeConnection(remoteConn);
+			
+			Log.log(Level.SEVERE, "Could not insert/update remote db with user profile info (" + fetchedPlayerId + ") SQL", e);
+			return false;
 		}
 		
-		DiscordChatUtils.message(p_event.getChannel(), "Your osu! profile was set to " + userDisplay);
+		return true;
 	}
 }
