@@ -77,8 +77,8 @@ public class OsuApiManager {
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
 		connection.setRequestMethod(p_requestMethod);	
-		connection.setConnectTimeout(5000);
-		connection.setReadTimeout(10000);
+		connection.setConnectTimeout(15000);
+		connection.setReadTimeout(15000);
 		connection.setRequestProperty("User-Agent", "Mozilla/5.0");
 		connection.setRequestProperty("Accept", "application/json");
 		connection.setRequestProperty("Content-Type", "application/json");

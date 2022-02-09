@@ -65,8 +65,8 @@ public class OsuRequestRegulator {
 					toProcess = p_isApi ? m_apiRequests.getFirst() : m_htmlRequests.getFirst();
 					
 					if(toProcess != null) {
-						if(p_isApi) m_apiRequests.remove();
-						else m_htmlRequests.remove();
+						if(p_isApi) m_apiRequests.remove(toProcess);
+						else m_htmlRequests.remove(toProcess);
 					}
 				} catch(NoSuchElementException e) { }
 				
