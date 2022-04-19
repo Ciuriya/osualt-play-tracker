@@ -54,10 +54,11 @@ public class Constants {
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
 		new long[] {1800, 0},        // 30m / not needed
 		new long[] {7200, 900},      // 2h  / 15m
-		new long[] {28800, 1800},    // 8h / 30m
-		new long[] {57600, 2400},	 // 16h / 40m
-		new long[] {86400, 3000},    // 1d  / 50m
-		new long[] {172800, 3600},   // 2d  / 1h
+		new long[] {14400, 1800},	 // 4h  / 30m
+		new long[] {28800, 2400},    // 8h  / 40m
+		new long[] {57600, 3000},	 // 16h / 50m
+		new long[] {86400, 3600},    // 1d  / 1h
+		new long[] {172800, 4500},   // 2d  / 1h15m
 		new long[] {259200, 5400},   // 3d  / 1h30m
 		new long[] {604800, 7200},   // 7d  / 2h
 		new long[] {1209600, 10800}, // 14d / 3h
