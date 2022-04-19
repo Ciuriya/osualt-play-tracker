@@ -52,10 +52,15 @@ public class Constants {
 	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
-		new long[] {3600, 0}, // 1h / not needed
-		new long[] {259200, 1800}, // 3d / 45m
-		new long[] {604800, 2700}, // 7d / 60m
-		new long[] {2592000, 7200} // 31d / 2h
+		new long[] {1800, 0},        // 30m / not needed
+		new long[] {7200, 900},      // 2h  / 15m
+		new long[] {43800, 1800},    // 12h / 30m
+		new long[] {86400, 2700},    // 1d  / 45m
+		new long[] {172800, 3600},   // 2d  / 1h
+		new long[] {259200, 5400},   // 3d  / 1h30m
+		new long[] {604800, 7200},   // 7d  / 2h
+		new long[] {1209600, 10800}, // 14d / 3h
+		new long[] {2592000, 14400}  // 31d / 4h
 	};
 	
 	// the osu!api's endpoint url
