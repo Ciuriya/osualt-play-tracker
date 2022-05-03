@@ -26,7 +26,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			OsuScoresRequest request = new OsuScoresRequest(p_user.getUserId(), "recent", 
 															String.valueOf(Constants.OSU_RECENT_PLAYS_LIMIT), 
 															"0", p_user.justMovedCycles() ? "false" : "true");
-			Object requestObject = OsuRequestRegulator.getInstance().sendRequestSync(request, 30000, true);
+			Object requestObject = OsuRequestRegulator.getInstance().sendRequestSync(request, 30000, false);
 
 			if(OsuUtils.isAnswerValid(requestObject, JSONArray.class)) {
 				JSONArray array = (JSONArray) requestObject;
@@ -37,18 +37,35 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 				int addedPlaycount = 0;
 
 				if(!array.isEmpty()) {
+					List<OsuPlay> lastCachedPlays = p_user.getCachedLatestPlays(Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
+					Timestamp oldestCachedPlayTime = latestPlayDate;
+					
+					if(!lastCachedPlays.isEmpty()) {
+						oldestCachedPlayTime = lastCachedPlays.get(lastCachedPlays.size() - 1).getDatePlayed();
+					}
+					
 					for(int i = array.length() - 1; i >= 0; --i) {
 						OsuPlay play = new OsuPlay(array.optJSONObject(i));
 						Timestamp datePlayed = play.getDatePlayed();
 						
-						if(datePlayed != null && datePlayed.after(latestPlayDate)) {
-							++addedPlaycount;
+						if(datePlayed != null) {
+							boolean canUploadPlay = false;
 							
-							if(play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus())
-								playsToUpload.add(play);
+							if(datePlayed.after(latestPlayDate)) {
+								canUploadPlay = true;
+							} else if(!lastCachedPlays.isEmpty() && datePlayed.after(oldestCachedPlayTime) && !play.getRank().contentEquals("F") && !lastCachedPlays.contains(play)) {
+								canUploadPlay = true;
+							}
+							
+							if(canUploadPlay) {
+								++addedPlaycount;
+								
+								if(play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus())
+									playsToUpload.add(play);
+							}
+							
+							lastFetchedDate = datePlayed;
 						}
-						
-						if(datePlayed != null) lastFetchedDate = datePlayed;
 					}
 				}
 				
