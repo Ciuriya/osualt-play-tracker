@@ -50,17 +50,18 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 						
 						if(datePlayed != null) {
 							boolean canUploadPlay = false;
+							boolean isPlayUploadable = play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus();
 							
 							if(datePlayed.after(latestPlayDate)) {
 								canUploadPlay = true;
-							} else if(!lastCachedPlays.isEmpty() && datePlayed.after(oldestCachedPlayTime) && !play.getRank().contentEquals("F") && !lastCachedPlays.contains(play)) {
+							} else if(!lastCachedPlays.isEmpty() && !lastCachedPlays.contains(play) && datePlayed.after(oldestCachedPlayTime) && isPlayUploadable) {
 								canUploadPlay = true;
 							}
 							
 							if(canUploadPlay) {
 								++addedPlaycount;
 								
-								if(play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus())
+								if(isPlayUploadable)
 									playsToUpload.add(play);
 							}
 							

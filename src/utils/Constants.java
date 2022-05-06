@@ -84,5 +84,5 @@ public class Constants {
 	public static final int OSU_PLAY_PRUNING_LOOP_INTERVAL = 3600;
 	
 	// days before a play is DELETED from the db
-	public static final int OSU_PLAY_PRUNE_DELAY = 7;
+	public static final int OSU_PLAY_PRUNE_DELAY = 14;
 }

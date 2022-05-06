@@ -395,6 +395,7 @@ public class OsuPlay {
 		
 		OsuPlay other = (OsuPlay) o;
 		
-		return this.getUserId().contentEquals(other.getUserId()) && this.getDatePlayed().equals(other.getDatePlayed());
+		return this.getUserId().equals(other.getUserId()) && this.getScore() == other.getScore() && this.getBeatmapId() == other.getBeatmapId() && 
+			   this.getEnabledMods() == other.getEnabledMods() && this.getAccuracy() == other.getAccuracy() && this.getDatePlayed().getTime() == this.getDatePlayed().getTime();
 	}
 }

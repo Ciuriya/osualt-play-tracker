@@ -59,7 +59,7 @@ public class OsuTrackingManager {
 				long osuPlayPruningInterval = Constants.OSU_PLAY_PRUNING_LOOP_INTERVAL * 1000;
 				new Timer().scheduleAtFixedRate(new TimerTask() {
 					public void run() {
-						//OsuPlay.pruneOldPlays(); http://smcmax.com/s/2021-09-29_13-24-14.png
+						OsuPlay.pruneOldPlays();
 					}
 				}, osuPlayPruningInterval, osuPlayPruningInterval);
 			}

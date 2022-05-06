@@ -2,6 +2,7 @@ package commands;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import data.CommandCategory;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -108,7 +109,7 @@ public class OsuStatusCommand extends Command {
 
 		builder.setDescription(descriptionText);
 		
-		String scoresText = "No plays found!";
+		String scoresText = "No plays found in the last " + TimeUtils.toDuration(TimeUnit.DAYS.toMillis(Constants.OSU_PLAY_PRUNE_DELAY), false) + "!";
 		List<OsuPlay> latestFetchedScores = user.getCachedLatestPlays(Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
 		
 		if(!latestFetchedScores.isEmpty()) {
