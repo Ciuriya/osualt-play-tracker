@@ -12,15 +12,15 @@ import net.dv8tion.jda.api.entities.TextChannel;
 public class DiscordChatUtils {
 
 	public static void message(MessageChannel p_channel, String p_message) {
-		// cut the message into parts discord can send (<2000 characters per message)
-		// 1960 gives us some leeway just in case
-		for(int i = 0; i < (int) Math.ceil(p_message.length() / 1960f); i++) {
+		// cut the message into parts discord can send (<4000 characters per message)
+		// 3960 gives us some leeway just in case
+		for(int i = 0; i < (int) Math.ceil(p_message.length() / 3960f); i++) {
 			String cutMessage = p_message;
 			
 			if(i > 0) {
-				if((i + 1) * 1960 > cutMessage.length())
-					cutMessage = cutMessage.substring(i * 1960);
-				else cutMessage = cutMessage.substring(i * 1960, (i + 1) * 1960);
+				if((i + 1) * 3960 > cutMessage.length())
+					cutMessage = cutMessage.substring(i * 3960);
+				else cutMessage = cutMessage.substring(i * 3960, (i + 1) * 3960);
 			}
 			
 			final String part = cutMessage;

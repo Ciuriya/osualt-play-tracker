@@ -8,11 +8,13 @@ public class ApplicationStats {
 	private long m_timerStart;
 	
 	private boolean m_osuApiStalled;
+	private int m_osuApiFailedAttempts;
 	private double m_osuApiLoad;
 	private int m_osuApiRequestsSent;
 	private int m_osuApiRequestsFailed;
 	
 	private boolean m_osuHtmlStalled;
+	private int m_osuHtmlFailedAttempts;
 	private double m_osuHtmlLoad;
 	private int m_osuHtmlRequestsSent;
 	private int m_osuHtmlRequestsFailed;
@@ -45,6 +47,10 @@ public class ApplicationStats {
 		return m_osuApiStalled;
 	}
 	
+	public int getOsuApiFailedAttempts() {
+		return m_osuApiFailedAttempts;
+	}
+	
 	public double getOsuApiLoad() {
 		return m_osuApiLoad;
 	}
@@ -59,6 +65,10 @@ public class ApplicationStats {
 	
 	public void setOsuApiStalled(boolean p_apiStalled) {
 		m_osuApiStalled = p_apiStalled;
+	}
+	
+	public void setOsuApiFailedAttempts(int p_failedAttempts) {
+		m_osuApiFailedAttempts = p_failedAttempts;
 	}
 	
 	public void setOsuApiLoad(double p_apiLoad) {
@@ -77,6 +87,10 @@ public class ApplicationStats {
 		return m_osuHtmlStalled;
 	}
 	
+	public int getOsuHtmlFailedAttempts() {
+		return m_osuHtmlFailedAttempts;
+	}
+	
 	public double getOsuHtmlLoad() {
 		return m_osuHtmlLoad;
 	}
@@ -91,6 +105,10 @@ public class ApplicationStats {
 	
 	public void setOsuHtmlStalled(boolean p_htmlStalled) {
 		m_osuHtmlStalled = p_htmlStalled;
+	}
+	
+	public void setOsuHtmlFailedAttempts(int p_failedAttempts) {
+		m_osuHtmlFailedAttempts = p_failedAttempts;
 	}
 	
 	public void setOsuHtmlLoad(double p_htmlLoad) {

@@ -29,6 +29,8 @@ public abstract class OsuRefreshRunnable implements Runnable {
 	public void run() {
 		m_lastStartTime = System.currentTimeMillis();
 		
+		OsuTrackingManager trackingManager = OsuTrackingManager.getInstance();
+		
 		try {
 			for(;;) {
 				if(m_stopping) return;
@@ -45,8 +47,9 @@ public abstract class OsuRefreshRunnable implements Runnable {
 					if(refreshUser(user)) {
 						user.updateActivityCycle();
 						user.updateDatabaseEntry();
-					}
-					
+						trackingManager.resetFailedUserChecks(GeneralUtils.stringToInt(user.getUserId()));
+					} else trackingManager.addFailedUserCheck(GeneralUtils.stringToInt(user.getUserId()));
+
 					user.setLastRefreshTime();
 					
 					user.setJustMovedCycles(false);

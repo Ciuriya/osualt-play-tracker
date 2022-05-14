@@ -43,11 +43,11 @@ public class Constants {
 	// how many osu! html scrapes can we attempt per minute
 	public static final int OSU_HTML_REQUESTS_PER_MINUTE = 50;
 
-	// the fibonacci sequence up to 21
-	public static final int[] FIBONACCI = new int[] { 1, 1, 2, 3, 5, 8, 13, 21 };
+	// the fibonacci sequence up to 13
+	public static final int[] FIBONACCI = new int[] { 1, 1, 2, 3, 5, 8, 13 };
 	
 	// interval between osu registered user refreshes
-	public static final int OSU_REGISTERED_USER_REFRESH_INTERVAL = 600;
+	public static final int OSU_REGISTERED_USER_REFRESH_INTERVAL = 300;
 	
 	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
 	// and the refresh frequency of the cycle
@@ -85,4 +85,13 @@ public class Constants {
 	
 	// days before a play is DELETED from the db
 	public static final int OSU_PLAY_PRUNE_DELAY = 14;
+	
+	// tries before we consider the registered user as restricted
+	public static final int OSU_REGISTERED_USER_CHECK_ALLOWED_TRIES = 3;
+	
+	// time in seconds until restricted users get a few more tries when refreshing registered users
+	public static final int OSU_REGISTERED_USER_RESTRICTED_FLAG_RESET_LOOP_INTERVAL = 86400;
+	
+	// how many fails is a single request allowed until it is skipped by the regulator
+	public static final int OSU_REQUEST_FAILS_ALLOWED = 3;
 }

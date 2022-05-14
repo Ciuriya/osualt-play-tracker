@@ -15,15 +15,15 @@ import utils.TimeUtils;
 public class StatsCommand extends Command {
 
 	public StatsCommand() {
-		super(null, false, true, CommandCategory.ADMIN, new String[]{"stats"}, 
+		super(null, false, true, CommandCategory.ADMIN, new String[]{"botstats"}, 
 			  "Shows o!alt tracker stats.", 
 			  "Shows a variety of stats linked to this bot.", 
-			  new String[]{"stats", "Shows the stats page."});
+			  new String[]{"botstats", "Shows the stats page."});
 	}
 
 	@Override
 	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
-		boolean showFullStats = BotAdmins.isAdmin(p_event.getAuthor());
+		boolean showFullStats = BotAdmins.isAdmin(p_event.getAuthor()) && (p_args.length == 0 || !p_args[0].equalsIgnoreCase("simple"));
 		EmbedBuilder builder = new EmbedBuilder();
 		ApplicationStats stats = ApplicationStats.getInstance();
 		OsuTrackingManager osuTrackManager = OsuTrackingManager.getInstance();
@@ -50,7 +50,7 @@ public class StatsCommand extends Command {
 							 stats.getOsuHtmlRequestsSent() + " / " + stats.getOsuHtmlRequestsFailed(), true);
 		}
 		
-		builder.addField("Total registered osu! users", String.valueOf(osuTrackManager.getLoadedRegisteredUsers()), false);
+		builder.addField("Total registered osu! users", osuTrackManager.getLoadedRegisteredUsers() + " (+" + osuTrackManager.getRestrictedUsers().size() + " restricted)", false);
 		builder.addField("Scores uploaded", String.valueOf(stats.getScoresUploaded()), true);
 		
 		for(int i = 0; i < Constants.OSU_ACTIVITY_CYCLES.length; ++i) {

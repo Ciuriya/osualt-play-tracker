@@ -101,9 +101,9 @@ public class OsuStatusCommand extends Command {
 			String storedUserId = OsuUtils.getOsuPlayerIdFromDiscordUserId(p_event.getAuthor().getId(), true);
 			
 			if(storedUserId.contentEquals(userId))
-				descriptionText += "\nUse **`" + Constants.DEFAULT_PREFIX + "osutrack`** to manually enter the live tracking cycle";
+				descriptionText += "\nUse **`" + Constants.DEFAULT_PREFIX + "track`** to manually enter the live tracking cycle";
 			else 
-				descriptionText += "\nUse **`" + Constants.DEFAULT_PREFIX + "osutrack " + username + 
+				descriptionText += "\nUse **`" + Constants.DEFAULT_PREFIX + "track " + username + 
 								   "`** to manually enter them into the live tracking cycle";
 		}
 
@@ -124,7 +124,7 @@ public class OsuStatusCommand extends Command {
 				currentScoreText += " | **<t:" + (play.getDatePlayed().getTime() / 1000) + ":R>**";
 				currentScoreText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
 				currentScoreText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");
-				currentScoreText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "SS" : "FC") : play.getCombo() + "x");
+				currentScoreText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "" : "FC") : play.getCombo() + "x");
 				currentScoreText += " " + play.getRank();
 				
 				if(play.getPP() > 0.0) 

@@ -75,9 +75,12 @@ public class OsuRequestRegulator {
 					
 					threadManager.executeAsync(new Runnable() {
 						public void run() {
-							int attempts = 0;
+							int currentRequestAttempts = 0;
+							int attempts = getFailedAttempts(p_isApi);
 							
-							while(attempts < Constants.FIBONACCI.length) {
+							if(attempts > 0) setStalled(p_isApi, true);
+							
+							while(currentRequestAttempts < Constants.OSU_REQUEST_FAILS_ALLOWED) {
 								try {
 									if(p_isApi) stats.addOsuApiRequestSent();
 									else stats.addOsuHtmlRequestSent();
@@ -87,18 +90,22 @@ public class OsuRequestRegulator {
 									if(request.getAnswer() instanceof String && ((String) request.getAnswer()).contentEquals("failed"))
 										throw new Exception("Request returned fail");
 									
+									if(attempts > 0) setFailedAttempts(p_isApi, 0);
+									
 									break;
 								} catch(Exception e) {
 									setStalled(p_isApi, true);
 									
-									int nextAttemptDelay = Constants.FIBONACCI[attempts] * 1000;
+									int nextAttemptDelay = Constants.FIBONACCI[Math.min(Constants.FIBONACCI.length - 1, attempts)] * 1000;
 									Log.log(Level.WARNING, "Retrying o!" + (p_isApi ? "api" : "html") + " request in " + nextAttemptDelay + "s\n" +
 														   "Request: " + request.getName() + " Ex: " + e.getMessage());
 									
 									GeneralUtils.sleep(nextAttemptDelay);
 								}
 								
-								attempts++;
+								addFailedAttempt(p_isApi);
+								++attempts;
+								++currentRequestAttempts;
 							}
 							
 							setStalled(p_isApi, false);
@@ -114,6 +121,23 @@ public class OsuRequestRegulator {
 		
 		if(p_isApi) stats.setOsuApiStalled(p_stalled);
 		else stats.setOsuHtmlStalled(p_stalled);
+	}
+	
+	private void addFailedAttempt(boolean p_isApi) {
+		setFailedAttempts(p_isApi, getFailedAttempts(p_isApi) + 1);
+	}
+	
+	private void setFailedAttempts(boolean p_isApi, int amount) {
+		ApplicationStats stats = ApplicationStats.getInstance();
+		
+		if(p_isApi) stats.setOsuApiFailedAttempts(amount);
+		else stats.setOsuHtmlFailedAttempts(amount);
+	}
+	
+	private int getFailedAttempts(boolean p_isApi) {
+		ApplicationStats stats = ApplicationStats.getInstance();
+		
+		return p_isApi ? stats.getOsuApiFailedAttempts() : stats.getOsuHtmlFailedAttempts();
 	}
 	
 	public Object sendRequestSync(OsuRequest p_request, int p_timeout, boolean p_priority) {

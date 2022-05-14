@@ -50,9 +50,14 @@ public class OsuUserRequest extends OsuRequest {
 		String requestArgsString = "key=" + type;
 		String post = OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/" + mode, requestArgsString.split("\\|"));
 		
-		if(post.isBlank() || !post.contains("{"))
-			setAnswer("failed");
-		else
+		if(post.isBlank() || !post.contains("{")) {
+			int intPost = GeneralUtils.stringToInt(post);
+			
+			if(intPost == 404) {
+				Log.log(Level.INFO, userId + " FLAGGED AS RESTRICTED");
+				setAnswer("restricted");
+			} else setAnswer("failed");
+		} else
 			setAnswer(new JSONObject(post));
 	}
 

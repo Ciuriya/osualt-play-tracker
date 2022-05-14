@@ -1,6 +1,7 @@
 package osu.api;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -93,6 +94,12 @@ public class OsuApiManager {
 
 		if(!p_body.isEmpty()) connection.getOutputStream().write(p_body.getBytes("UTF8"));
 
+		try {
+			connection.getInputStream();
+		} catch (FileNotFoundException e) {
+			return "" + connection.getResponseCode();
+		}
+		
 		BufferedReader inputStream = new BufferedReader(new InputStreamReader(connection.getInputStream()));
 		StringBuffer response = new StringBuffer();
 		char[] buffer = new char[1024];
