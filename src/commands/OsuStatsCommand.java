@@ -62,13 +62,14 @@ public class OsuStatsCommand extends Command {
 						  "https://a.ppy.sh/" + user.getUserId());
 		
 		String cachingLengthDisplay = TimeUtils.toDuration(TimeUnit.DAYS.toMillis(Constants.OSU_PLAY_PRUNE_DELAY), false);
-		builder.setDescription("All values below **ONLY** account for **HIGHEST SCORE** plays on maps played in the last " + cachingLengthDisplay + " (only checks with your new bests in a mod combo) and discards any other plays.");
+		builder.setDescription("All values below **ONLY** account for new **HIGHEST SCORE** plays on maps played in the last " + cachingLengthDisplay + " and discards any other plays.");
 		
 		List<OsuPlay> allCachedPlays = getAllCachedPlays(userId);
 		List<OsuPlay> lastDayCachedPlays = filterCachedPlaysInLastDurationTimeFrame(allCachedPlays, 24 * 60 * 60 * 1000);
 		
 		builder.addField("Saved scores for last 24h/" + cachingLengthDisplay, 
-						 lastDayCachedPlays.size() + " / " + allCachedPlays.size(), true);
+						 GeneralUtils.addCommasToNumber(lastDayCachedPlays.size()) + " / " + 
+						 GeneralUtils.addCommasToNumber(allCachedPlays.size()), true);
 		
 		builder.addField("Play Ranks in last 24h", 
 						 getUniqueRanksInPlays(lastDayCachedPlays), false);
@@ -89,6 +90,9 @@ public class OsuStatsCommand extends Command {
 		builder.addField("Average Accuracy in last 24h/" + cachingLengthDisplay, 
 						 getAverageAccuracyInPlays(lastDayCachedPlays) + " / " + getAverageAccuracyInPlays(allCachedPlays), true);
 		
+		builder.addField("Highest combo in last 24h/" + cachingLengthDisplay, 
+						 getMaxComboInPlays(lastDayCachedPlays) + " / " + getMaxComboInPlays(allCachedPlays), true);
+		
 		DiscordChatUtils.embed(p_event.getChannel(), builder.build());
 	}
 	
@@ -108,8 +112,9 @@ public class OsuStatsCommand extends Command {
 			while(rs.next()) {
 				long beatmapId = rs.getLong(3);
 				long score = rs.getLong(4);
+				int updateStatus = rs.getInt(20);
 
-				if(!fetchedPlays.containsKey(beatmapId) || fetchedPlays.get(beatmapId).getScore() < score)
+				if(updateStatus > 0 && (!fetchedPlays.containsKey(beatmapId) || fetchedPlays.get(beatmapId).getScore() < score))
 					fetchedPlays.put(beatmapId, new OsuPlay(rs));
 			}
 			
@@ -159,14 +164,14 @@ public class OsuStatsCommand extends Command {
 		
 		String display = "";
 		
-		if(xh > 0) display += GeneralUtils.formatLargeNumber(xh) + " XH / ";
-		if(x > 0) display += GeneralUtils.formatLargeNumber(x) + " X / ";
-		if(sh > 0) display += GeneralUtils.formatLargeNumber(sh) + " SH / ";
-		if(s > 0) display += GeneralUtils.formatLargeNumber(s) + " S / ";
-		if(a > 0) display += GeneralUtils.formatLargeNumber(a) + " A / ";
-		if(b > 0) display += GeneralUtils.formatLargeNumber(b) + " B / ";
-		if(c > 0) display += GeneralUtils.formatLargeNumber(c) + " C / ";
-		if(d > 0) display += GeneralUtils.formatLargeNumber(d) + " D / ";
+		if(xh > 0) display += GeneralUtils.addCommasToNumber(xh) + " XH / ";
+		if(x > 0) display += GeneralUtils.addCommasToNumber(x) + " X / ";
+		if(sh > 0) display += GeneralUtils.addCommasToNumber(sh) + " SH / ";
+		if(s > 0) display += GeneralUtils.addCommasToNumber(s) + " S / ";
+		if(a > 0) display += GeneralUtils.addCommasToNumber(a) + " A / ";
+		if(b > 0) display += GeneralUtils.addCommasToNumber(b) + " B / ";
+		if(c > 0) display += GeneralUtils.addCommasToNumber(c) + " C / ";
+		if(d > 0) display += GeneralUtils.addCommasToNumber(d) + " D / ";
 		
 		return display.isEmpty() ? "No plays" : display.substring(0, display.length() - 3);
 	}
@@ -176,7 +181,7 @@ public class OsuStatsCommand extends Command {
 		for(OsuPlay play : p_plays)
 			totalPP += play.getPP();
 		
-		return GeneralUtils.toFormattedNumber(totalPP / (double) p_plays.size()) + "pp";
+		return totalPP == 0 ? "0pp" : GeneralUtils.toFormattedNumber(totalPP / (double) p_plays.size()) + "pp";
 	}
 	
 	private String getAverageAccuracyInPlays(List<OsuPlay> p_plays) {
@@ -186,6 +191,15 @@ public class OsuStatsCommand extends Command {
 		
 		totalAccuracy *= 100;
 		
-		return GeneralUtils.toFormattedNumber(totalAccuracy / (double) p_plays.size()) + "%";
+		return totalAccuracy == 0 ? "0%" : GeneralUtils.toFormattedNumber(totalAccuracy / (double) p_plays.size()) + "%";
+	}
+	
+	private String getMaxComboInPlays(List<OsuPlay> p_plays) {
+		long highestCombo = 0;
+		for(OsuPlay play : p_plays)
+			if(play.getCombo() > highestCombo)
+				highestCombo = play.getCombo();
+		
+		return GeneralUtils.addCommasToNumber(highestCombo) + "x";
 	}
 }
