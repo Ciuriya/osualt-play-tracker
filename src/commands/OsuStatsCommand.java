@@ -83,12 +83,15 @@ public class OsuStatsCommand extends Command {
 		
 		builder.addField("Average Score per play in last 24h/" + cachingLengthDisplay, 
 						 getAverageScorePerPlay(lastDayCachedPlays) + " / " + getAverageScorePerPlay(allCachedPlays), true);
-		 
-		builder.addField("Average PP per play in last 24h/" + cachingLengthDisplay,
-						 getAveragePPInPlays(lastDayCachedPlays) + " / " + getAveragePPInPlays(allCachedPlays), true);
 		
 		builder.addField("Average Accuracy in last 24h/" + cachingLengthDisplay, 
 						 getAverageAccuracyInPlays(lastDayCachedPlays) + " / " + getAverageAccuracyInPlays(allCachedPlays), true);
+		
+		builder.addField("Average PP per play in last 24h/" + cachingLengthDisplay,
+						 getAveragePPInPlays(lastDayCachedPlays) + " / " + getAveragePPInPlays(allCachedPlays), true);
+		
+		builder.addField("Highest pp in last 24h/" + cachingLengthDisplay, 
+						 getMaxPPInPlays(lastDayCachedPlays) + " / " + getMaxPPInPlays(allCachedPlays), true);
 		
 		builder.addField("Highest combo in last 24h/" + cachingLengthDisplay, 
 						 getMaxComboInPlays(lastDayCachedPlays) + " / " + getMaxComboInPlays(allCachedPlays), true);
@@ -201,5 +204,14 @@ public class OsuStatsCommand extends Command {
 				highestCombo = play.getCombo();
 		
 		return GeneralUtils.addCommasToNumber(highestCombo) + "x";
+	}
+	
+	private String getMaxPPInPlays(List<OsuPlay> p_plays) {
+		double highestPP = 0;
+		for(OsuPlay play : p_plays)
+			if(play.getPP() > highestPP)
+				highestPP = play.getPP();
+		
+		return GeneralUtils.toFormattedNumber(highestPP) + "pp";
 	}
 }
