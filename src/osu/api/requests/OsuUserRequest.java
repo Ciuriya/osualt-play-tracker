@@ -50,15 +50,9 @@ public class OsuUserRequest extends OsuRequest {
 		String requestArgsString = "key=" + type;
 		String post = OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/" + mode, requestArgsString.split("\\|"));
 		
-		if(post.isBlank() || !post.contains("{")) {
-			int intPost = GeneralUtils.stringToInt(post);
-			
-			if(intPost == 404) {
-				Log.log(Level.INFO, userId + " FLAGGED AS RESTRICTED");
-				setAnswer("restricted");
-			} else setAnswer("failed");
-		} else
+		if(!checkForEmptyPost(post, userId)) {
 			setAnswer(new JSONObject(post));
+		}
 	}
 
 	private void sendHtml(String[] p_args) throws Exception {
@@ -68,7 +62,7 @@ public class OsuUserRequest extends OsuRequest {
 		user.put("general_page", htmlPage);
 
 		if(!HtmlUtils.getFirstMatchingLineFromHtmlPage(htmlPage, 0, "No information recorded").isEmpty()) {
-			setAnswer(user);
+			setAnswer("restricted");
 			return;
 		}
 		

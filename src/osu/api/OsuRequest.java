@@ -1,5 +1,10 @@
 package osu.api;
 
+import java.util.logging.Level;
+
+import data.Log;
+import utils.GeneralUtils;
+
 public abstract class OsuRequest {
 	
 	private String m_name;
@@ -56,4 +61,19 @@ public abstract class OsuRequest {
 	}
 
 	public abstract void send(boolean p_api) throws Exception;
+	
+	protected boolean checkForEmptyPost(String post, String userId) {
+		if(post.isBlank() || !post.contains("{")) {
+			int intPost = GeneralUtils.stringToInt(post);
+			
+			if(intPost == 404) {
+				Log.log(Level.INFO, userId + " FLAGGED AS RESTRICTED");
+				setAnswer("restricted");
+			} else setAnswer("failed");
+			
+			return true;
+		}
+		
+		return false;
+	}
 }

@@ -12,6 +12,7 @@ import osu.api.OsuRequestTypes;
 import osu.api.requests.OsuScoresRequest;
 import osu.api.requests.OsuUserRequest;
 import utils.Constants;
+import utils.GeneralUtils;
 import utils.OsuUtils;
 
 public class OsuTrackingRunnable extends OsuRefreshRunnable {
@@ -87,6 +88,10 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			
 			if(p_user.justMovedCycles())
 				return updateUserPlaycount(p_user);
+			
+			if(requestObject instanceof String && ((String) requestObject).equalsIgnoreCase("restricted")) {
+				OsuTrackingManager.getInstance().addFailedUserCheck(GeneralUtils.stringToInt(p_user.getUserId()));
+			}
 			
 			return false;
 		} 

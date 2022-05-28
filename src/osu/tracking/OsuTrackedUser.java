@@ -49,6 +49,8 @@ public class OsuTrackedUser {
 		setLastUploadedTime();
 		
 		updateActivityCycle();
+		
+		if(m_activityCycle == 0) setJustMovedCycles(true);
 	}
 	
 	public OsuTrackedUser(ResultSet p_resultSet) throws SQLException {
@@ -57,6 +59,8 @@ public class OsuTrackedUser {
 		
 		loadFromSql(p_resultSet);
 		updateActivityCycle();
+		
+		if(m_activityCycle == 0) setJustMovedCycles(true);
 	}
 	
 	private void loadFromSql(ResultSet p_resultSet) throws SQLException {
