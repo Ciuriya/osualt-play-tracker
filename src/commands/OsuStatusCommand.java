@@ -124,8 +124,8 @@ public class OsuStatusCommand extends Command {
 				currentScoreText += " | **<t:" + (play.getDatePlayed().getTime() / 1000) + ":R>**";
 				currentScoreText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
 				currentScoreText += " | " + (play.getAccuracy() == 1.0 ? "" : GeneralUtils.toFormattedNumber(play.getAccuracy() * 100) + "% ");
-				currentScoreText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? "" : "FC") : play.getCombo() + "x");
-				currentScoreText += " " + play.getRank();
+				currentScoreText += (play.isPerfect() ? (play.getAccuracy() == 1.0 ? " " : "FC ") : play.getCombo() + "x ");
+				currentScoreText += "" + play.getRank();
 				
 				if(play.getPP() > 0.0) 
 					currentScoreText += " | " + GeneralUtils.toFormattedNumber(play.getPP()) + "pp";

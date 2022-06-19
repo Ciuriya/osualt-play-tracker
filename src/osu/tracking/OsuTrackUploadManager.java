@@ -42,6 +42,13 @@ public class OsuTrackUploadManager {
 		}, 5000, Constants.OSU_PLAY_UPLOAD_INTERVAL * 1000);
 		
 		//tempUploadLocalDiscordOsuUserLinks();
+		/*
+		ThreadingManager.getInstance().executeAsync(new Runnable() {
+			public void run() {
+				fixMissingPPValuesInDB();
+			}
+		}, 999999999, false);
+		*/
 	}
 	
 	public void addPlaysToUpload(List<OsuPlay> p_plays) {
@@ -97,6 +104,141 @@ public class OsuTrackUploadManager {
 			localDb.closeConnection(localConn);
 			remoteDb.closeConnection(remoteConn);
 		}
+	}
+	*/
+	
+	/*
+	private void fixMissingPPValuesInDB() {
+		Database trackerDB = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Database osualtDB = DatabaseManager.getInstance().get(Constants.OSUALT_REMOTE_DB_NAME);
+		Connection trackerConn = trackerDB.getConnection();
+		Connection osualtConn = osualtDB.getConnection();
+
+		List<OsuPlay> localPlays = new ArrayList<>();
+		try {
+			PreparedStatement localPlaySt = trackerConn.prepareStatement("SELECT * FROM `osu-play` WHERE `pp`=0 ORDER BY `date_played` ASC");
+			ResultSet rs = localPlaySt.executeQuery();
+
+			while(rs.next()) {
+				OsuPlay localPlay = new OsuPlay(rs);
+
+				if(!localPlay.isUploaded()) continue;
+				
+				localPlays.add(localPlay);
+			}
+			
+			rs.close();
+			localPlaySt.close();
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "Failed to load missing pp value plays from db", e);
+		} finally {
+			trackerDB.closeConnection(trackerConn);
+			osualtDB.closeConnection(osualtConn);
+		}
+		
+		while(!localPlays.isEmpty()) {
+			List<OsuPlay> subset = localPlays.subList(0, localPlays.size() > 50 ? 50 : localPlays.size());
+			
+			if(updateFailedPlaysInOsuAlt(subset))
+				localPlays.removeAll(subset);
+			else break;
+		}
+	}
+	
+	private boolean updateFailedPlaysInOsuAlt(List<OsuPlay> p_plays) {
+		Database trackerDB = DatabaseManager.getInstance().get(Constants.TRACKER_DATABASE_NAME);
+		Database osualtDB = DatabaseManager.getInstance().get(Constants.OSUALT_REMOTE_DB_NAME);
+		Connection trackerConn = trackerDB.getConnection();
+		Connection osualtConn = osualtDB.getConnection();
+		boolean result = false;
+		
+		try {
+			PreparedStatement osualtSt = osualtConn.prepareStatement("UPDATE scores SET score = ?, count300 = ?, count100 = ?, count50 = ?, countmiss = ?, combo = ?, perfect = ?, enabled_mods = ?, date_played = ?, rank = ?, " +
+					 												 "pp = ?, replay_available = ?, is_hd = ?, is_hr = ?, is_dt = ?, is_fl = ?, is_ht = ?, is_ez = ?, is_nf = ?, is_nc = ?, is_td = ?, is_so = ?, is_sd = ?, is_pf = ? " +
+					 												 "WHERE user_id = ? AND beatmap_id = ?");
+			PreparedStatement localPlayUpdateSt = trackerConn.prepareStatement("UPDATE `osu-play` SET `pp`=? WHERE `score_id`=?");
+			
+			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
+			for(OsuPlay localPlay : p_plays) {
+				String post = OsuApiManager.getInstance().sendApiRequest("beatmaps/" + localPlay.getBeatmapId() + "/scores/users/" + localPlay.getUserId() + "/all", new String[]{});
+				JSONArray scores = new JSONObject(post).optJSONArray("scores");
+				
+				if(scores != null) {
+					for(int i = 0; i < scores.length(); ++i) {
+						OsuPlay play = new OsuPlay(scores.getJSONObject(i));
+						
+						if(play.getPP() != 0.0 && 
+						   localPlay.getEnabledMods() == play.getEnabledMods() && 
+						   localPlay.getScore() == play.getScore() &&
+						   localPlay.getAccuracy() == play.getAccuracy()) {
+							List<Mods> mods = Mods.getModsFromBit(play.getEnabledMods());
+							
+							osualtSt.setLong(1, play.getScore());
+							osualtSt.setInt(2, play.getCount300());
+							osualtSt.setInt(3, play.getCount100());
+							osualtSt.setInt(4, play.getCount50());
+							osualtSt.setInt(5, play.getCountMiss());
+							osualtSt.setInt(6, play.getCombo());
+							osualtSt.setInt(7, play.isPerfect() ? 1 : 0);
+							osualtSt.setString(8, play.getEnabledMods() + "");
+							osualtSt.setTimestamp(9, play.getDatePlayed(), calendar);
+							osualtSt.setString(10, play.getRank());
+							osualtSt.setDouble(11, play.getPP());
+							osualtSt.setInt(12, play.isReplayAvailable() ? 1 : 0);
+							osualtSt.setBoolean(13, mods.contains(Mods.Hidden));
+							osualtSt.setBoolean(14, mods.contains(Mods.HardRock));
+							osualtSt.setBoolean(15, mods.contains(Mods.DoubleTime));
+							osualtSt.setBoolean(16, mods.contains(Mods.Flashlight));
+							osualtSt.setBoolean(17, mods.contains(Mods.HalfTime));
+							osualtSt.setBoolean(18, mods.contains(Mods.Easy));
+							osualtSt.setBoolean(19, mods.contains(Mods.NoFail));
+							osualtSt.setBoolean(20, mods.contains(Mods.Nightcore));
+							osualtSt.setBoolean(21, mods.contains(Mods.TouchDevice));
+							osualtSt.setBoolean(22, mods.contains(Mods.SpunOut));
+							osualtSt.setBoolean(23, mods.contains(Mods.SuddenDeath));
+							osualtSt.setBoolean(24, mods.contains(Mods.Perfect));
+							osualtSt.setInt(25, GeneralUtils.stringToInt(localPlay.getUserId()));
+							osualtSt.setLong(26, localPlay.getBeatmapId());
+							localPlayUpdateSt.setDouble(1, play.getPP());
+							localPlayUpdateSt.setLong(2, localPlay.getScoreId());
+							
+							osualtSt.addBatch();
+							localPlayUpdateSt.addBatch();
+						}
+					}
+				}
+				
+				GeneralUtils.sleep(3000);
+			}
+			
+			
+			int[] osualtOutputValues = osualtSt.executeBatch();
+			int[] localOutputValues = localPlayUpdateSt.executeBatch();
+			int osualtUpdatedValues = 0;
+			int localUpdatedValues = 0;
+			
+			for(int output : osualtOutputValues)
+				if(output == 1) 
+					osualtUpdatedValues++;
+			
+			for(int output : localOutputValues)
+				if(output == 1) 
+					localUpdatedValues++;
+
+			osualtSt.close();
+			localPlayUpdateSt.close();
+
+			Log.log(Level.INFO, "Updated " + osualtUpdatedValues + " missing pp values in db (" + (osualtOutputValues.length - osualtUpdatedValues) + " failed to update into osualt)\n" + 
+								"Tracker had " + p_plays.size() + " 0pp plays locally, " + localUpdatedValues + " were updated.");
+			result = true;
+		} catch(Exception e) {
+			Log.log(Level.SEVERE, "Failed to update missing pp values", e);
+		} finally {
+			trackerDB.closeConnection(trackerConn);
+			osualtDB.closeConnection(osualtConn);
+		}
+		
+		return result;
 	}
 	*/
 	

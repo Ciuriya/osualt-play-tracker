@@ -62,12 +62,12 @@ public class OsuPlay {
 			m_bestId = p_jsonPlay.optLong("best_id", 0);
 			
 			JSONObject statisticsObject = p_jsonPlay.getJSONObject("statistics");
-			JSONObject beatmapObject = p_jsonPlay.getJSONObject("beatmap");
-			JSONObject beatmapSetObject = p_jsonPlay.getJSONObject("beatmapset");
+			JSONObject beatmapObject = p_jsonPlay.optJSONObject("beatmap");
+			JSONObject beatmapSetObject = p_jsonPlay.optJSONObject("beatmapset");
 			
 			m_scoreId = p_jsonPlay.optLong("id", 0);
 			m_userId = String.valueOf(p_jsonPlay.optLong("user_id", 0));
-			m_beatmapId = p_jsonPlay.optJSONObject("beatmap").optInt("id", 0);
+			m_beatmapId = beatmapObject != null ? beatmapObject.optInt("id", 0) : 0;
 			m_score = p_jsonPlay.optLong("score", 0);
 			m_count300 = statisticsObject.optInt("count_300", 0);
 			m_count100 = statisticsObject.optInt("count_100", 0);
@@ -110,12 +110,12 @@ public class OsuPlay {
 			m_rank = p_jsonPlay.optString("rank", "F");
 			m_pp = p_jsonPlay.optDouble("pp", 0);
 			m_replayAvailable = p_jsonPlay.optBoolean("replay", false);
-			m_title = beatmapSetObject.optString("artist", "") + " - " + beatmapSetObject.optString("title", "") + " [" + beatmapObject.optString("version", "") + "]";
+			m_title = beatmapSetObject != null ? (beatmapSetObject.optString("artist", "") + " - " + beatmapSetObject.optString("title", "") + " [" + beatmapObject.optString("version", "") + "]") : "";
 			m_accuracy = p_jsonPlay.optDouble("accuracy", 1);
 			
 			if(m_title.length() > 255) m_title = m_title.substring(0, 255);
 			
-			String status = beatmapObject.optString("status", "");
+			String status = beatmapObject != null ? beatmapObject.optString("status", "") : "";
 			m_canUploadRankedStatus = status.equalsIgnoreCase("ranked") || status.equalsIgnoreCase("loved") || status.equalsIgnoreCase("approved");
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Failed to load play from json", e);
