@@ -15,6 +15,9 @@ public class MessageListener extends ListenerAdapter {
 	public void onMessageReceived(MessageReceivedEvent p_event) {
 		if(p_event.getAuthor().isBot()) return;
 		
+		if(p_event.getAuthor().getId() == "137071064458067970")
+			p_event.getMessage().addReaction("U+1F6D0").queue();
+		
 		String message = p_event.getMessage().getContentRaw();
 		
 		// if we have a prefix, strip it, otherwise it's not a command (unless it's a dm)

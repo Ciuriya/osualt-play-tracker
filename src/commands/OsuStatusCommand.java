@@ -47,7 +47,7 @@ public class OsuStatusCommand extends Command {
 		OsuTrackedUser user = osuTrackManager.getUser(userId);
 		
 		if(user == null) {
-			DiscordChatUtils.message(p_event.getChannel(), "This osu! player isn't registered!");
+			DiscordChatUtils.message(p_event.getChannel(), "This osu! player isn't registered! :skull: http://smcmax.com/s/readinfo.gif");
 			return;
 		}
 		

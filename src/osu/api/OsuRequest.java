@@ -69,7 +69,7 @@ public abstract class OsuRequest {
 			if(intPost == 404) {
 				Log.log(Level.INFO, userId + " FLAGGED AS RESTRICTED");
 				setAnswer("restricted");
-			} else setAnswer("failed");
+			} else setAnswer("failed: " + intPost);
 			
 			return true;
 		}

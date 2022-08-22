@@ -88,7 +88,7 @@ public class OsuRequestRegulator {
 									request.send(p_isApi);
 									
 									if(request.getAnswer() instanceof String && ((String) request.getAnswer()).contentEquals("failed"))
-										throw new Exception("Request returned fail");
+										throw new Exception("Request returned " + ((String) request.getAnswer()));
 									
 									if(attempts > 0) setFailedAttempts(p_isApi, 0);
 									
