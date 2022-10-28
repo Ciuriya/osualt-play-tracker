@@ -4,6 +4,7 @@ import java.util.logging.Level;
 
 import commands.Command;
 import data.Log;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import utils.Constants;
@@ -16,13 +17,13 @@ public class MessageListener extends ListenerAdapter {
 		if(p_event.getAuthor().isBot()) return;
 		
 		if(p_event.getAuthor().getId().equalsIgnoreCase("137071064458067970")) {
-			p_event.getMessage().addReaction("\uD83D\uDED0").queue();
-			p_event.getMessage().addReaction("\uD83C\uDDF5").queue();
-			p_event.getMessage().addReaction("\uD83C\uDDF7").queue();
-			p_event.getMessage().addReaction("\uD83C\uDDF4").queue();
-			p_event.getMessage().addReaction("\uD83C\uDDEA").queue();
-			p_event.getMessage().addReaction("\uD83C\uDDF8").queue();
-			p_event.getMessage().addReaction("\uD83C\uDDF9").queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83D\uDED0")).queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF5")).queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF7")).queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF4")).queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDEA")).queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF8")).queue();
+			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF9")).queue();
 		}
 		
 		String message = p_event.getMessage().getContentRaw();

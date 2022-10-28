@@ -99,14 +99,18 @@ public class OsuPlay {
 			
 			// 2007-01-01T12:34:56+00:00 could be + or -
 			String datePlayedString = p_jsonPlay.optString("created_at", "2007-01-01T00:00:00+00:00").replace("T", " ");
-			boolean positiveTimezone = datePlayedString.contains("+");
-			String[] timezoneSplit = datePlayedString.split(positiveTimezone ? "\\+" : "-");
-			long timezoneOffset = TimeUtils.timezoneOffsetToTime(timezoneSplit[positiveTimezone ? 1 : timezoneSplit.length - 1]);
 			
-			timezoneOffset *= positiveTimezone ? 1 : -1;
-			datePlayedString = datePlayedString.substring(0, datePlayedString.lastIndexOf(positiveTimezone ? "+" : "-"));
-	
-			m_datePlayed = new Timestamp(TimeUtils.toTime(datePlayedString) - timezoneOffset);
+			if(!datePlayedString.endsWith("Z")) {
+				boolean positiveTimezone = datePlayedString.contains("+");
+				String[] timezoneSplit = datePlayedString.split(positiveTimezone ? "\\+" : "-");
+				long timezoneOffset = TimeUtils.timezoneOffsetToTime(timezoneSplit[positiveTimezone ? 1 : timezoneSplit.length - 1]);
+				
+				timezoneOffset *= positiveTimezone ? 1 : -1;
+				datePlayedString = datePlayedString.substring(0, datePlayedString.lastIndexOf(positiveTimezone ? "+" : "-"));
+
+				m_datePlayed = new Timestamp(TimeUtils.toTime(datePlayedString) - timezoneOffset);
+			} else m_datePlayed = new Timestamp(TimeUtils.toTime(datePlayedString.replace("Z", "")));
+
 			m_rank = p_jsonPlay.optString("rank", "F");
 			m_pp = p_jsonPlay.optDouble("pp", 0);
 			m_replayAvailable = p_jsonPlay.optBoolean("replay", false);

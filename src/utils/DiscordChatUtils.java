@@ -34,7 +34,7 @@ public class DiscordChatUtils {
 	}
 	
 	public static void embed(MessageChannel p_channel, MessageEmbed p_embed) {
-		p_channel.sendMessage(p_embed).queue(
+		p_channel.sendMessageEmbeds(p_embed).queue(
 				(message) -> Log.log(Level.INFO, "{Embed sent in " + 
 												 getChannelLogString(p_channel) + "} " + 
 												 p_embed.getAuthor().getName() + 

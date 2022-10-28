@@ -16,6 +16,7 @@ import managers.DiscordActivityManager;
 import managers.ThreadingManager;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
 import osu.api.OsuApiManager;
 import osu.api.OsuRequestRegulator;
 import osu.tracking.OsuTrackUploadManager;
@@ -62,6 +63,7 @@ public class Main {
 		// log into discord
 		try {
 			discordApi = JDABuilder.createDefault(loginInfo.getString("discordToken"))
+						 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
 						 .addEventListeners(new MessageListener())
 						 .build();
 			
