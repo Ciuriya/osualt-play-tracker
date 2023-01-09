@@ -71,31 +71,34 @@ public class OsuStatsCommand extends Command {
 						 GeneralUtils.addCommasToNumber(lastDayCachedPlays.size()) + " / " + 
 						 GeneralUtils.addCommasToNumber(allCachedPlays.size()), true);
 		
-		builder.addField("Play Ranks in last 24h", 
+		builder.addField("Plays in last 24h", 
 						 getUniqueRanksInPlays(lastDayCachedPlays), false);
 
-		builder.addField("Play Ranks in last " + cachingLengthDisplay, 
+		builder.addField("Plays in last " + cachingLengthDisplay, 
 		 		 		 getUniqueRanksInPlays(allCachedPlays), false);
+		
+		builder.addField("Highest score in last 24h/" + cachingLengthDisplay, 
+						 getMaxScoreInPlays(lastDayCachedPlays) + " / " + getMaxScoreInPlays(allCachedPlays), true);
+		
+		builder.addField("Highest combo in last 24h/" + cachingLengthDisplay, 
+				 		 getMaxComboInPlays(lastDayCachedPlays) + " / " + getMaxComboInPlays(allCachedPlays), true);
+		
+		builder.addField("Highest pp in last 24h/" + cachingLengthDisplay, 
+				 		 getMaxPPInPlays(lastDayCachedPlays) + " / " + getMaxPPInPlays(allCachedPlays), true);
+		
+		builder.addField("Average score per play in last 24h/" + cachingLengthDisplay, 
+				 		 getAverageScorePerPlay(lastDayCachedPlays) + " / " + getAverageScorePerPlay(allCachedPlays), true);
+		
+		builder.addField("Average accuracy in last 24h/" + cachingLengthDisplay, 
+				 		 getAverageAccuracyInPlays(lastDayCachedPlays) + " / " + getAverageAccuracyInPlays(allCachedPlays), true);
+		
+		builder.addField("Average pp per play in last 24h/" + cachingLengthDisplay,
+				 		 getAveragePPInPlays(lastDayCachedPlays) + " / " + getAveragePPInPlays(allCachedPlays), true);
 		
 		builder.addField("Raw ranked score in last 24h/" + cachingLengthDisplay,
 						 GeneralUtils.formatLargeNumber(getTotalScoreInPlays(lastDayCachedPlays)) + " / " + 
 						 GeneralUtils.formatLargeNumber(getTotalScoreInPlays(allCachedPlays)), true);
-		
-		builder.addField("Average Score per play in last 24h/" + cachingLengthDisplay, 
-						 getAverageScorePerPlay(lastDayCachedPlays) + " / " + getAverageScorePerPlay(allCachedPlays), true);
-		
-		builder.addField("Average Accuracy in last 24h/" + cachingLengthDisplay, 
-						 getAverageAccuracyInPlays(lastDayCachedPlays) + " / " + getAverageAccuracyInPlays(allCachedPlays), true);
-		
-		builder.addField("Average PP per play in last 24h/" + cachingLengthDisplay,
-						 getAveragePPInPlays(lastDayCachedPlays) + " / " + getAveragePPInPlays(allCachedPlays), true);
-		
-		builder.addField("Highest pp in last 24h/" + cachingLengthDisplay, 
-						 getMaxPPInPlays(lastDayCachedPlays) + " / " + getMaxPPInPlays(allCachedPlays), true);
-		
-		builder.addField("Highest combo in last 24h/" + cachingLengthDisplay, 
-						 getMaxComboInPlays(lastDayCachedPlays) + " / " + getMaxComboInPlays(allCachedPlays), true);
-		
+
 		DiscordChatUtils.embed(p_event.getChannel(), builder.build());
 	}
 	
@@ -195,6 +198,19 @@ public class OsuStatsCommand extends Command {
 		totalAccuracy *= 100;
 		
 		return totalAccuracy == 0 ? "0%" : GeneralUtils.toFormattedNumber(totalAccuracy / (double) p_plays.size()) + "%";
+	}
+	
+	private String getMaxScoreInPlays(List<OsuPlay> p_plays) {
+		long highestScore = 0;
+		for(OsuPlay play : p_plays)
+			if(play.getScore() > highestScore)
+				highestScore = play.getScore();
+		
+		if(highestScore >= 1000000000L) {
+			return GeneralUtils.formatLargeNumber(highestScore);
+		}
+		
+		return GeneralUtils.addCommasToNumber(highestScore);
 	}
 	
 	private String getMaxComboInPlays(List<OsuPlay> p_plays) {
