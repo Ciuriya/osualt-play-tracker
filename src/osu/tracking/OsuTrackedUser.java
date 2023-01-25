@@ -27,6 +27,7 @@ public class OsuTrackedUser {
 	private Timestamp m_lastUpdateTime;
 	private Timestamp m_lastRefreshTime; // THIS IS RUNTIME-ONLY, NOT SAVED
 	private Timestamp m_lastUploadedTime;
+	private Timestamp m_lastStatusMessageTime;
 	
 	private int m_activityCycle = 0;
 	private boolean m_justMovedCycles = false;
@@ -100,6 +101,10 @@ public class OsuTrackedUser {
 	
 	public Timestamp getLastUploadedTime() {
 		return m_lastUploadedTime;
+	}
+	
+	public Timestamp getLastStatusMessageTime() {
+		return m_lastStatusMessageTime;
 	}
 	
 	public int getActivityCycle() {
@@ -209,6 +214,15 @@ public class OsuTrackedUser {
 	
 	public void setLastUploadedTime(Timestamp p_timestamp) {
 		m_lastUploadedTime = p_timestamp;
+	}
+	
+	public void setLastStatusMessageTime() {
+		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
+		setLastStatusMessageTime(new Timestamp(calendar.getTime().getTime()));
+	}
+	
+	public void setLastStatusMessageTime(Timestamp p_timestamp) {
+		m_lastStatusMessageTime = p_timestamp;
 	}
 	
 	public void setIsFetching(boolean p_isFetching) {

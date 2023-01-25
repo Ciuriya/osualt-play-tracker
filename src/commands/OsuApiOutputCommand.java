@@ -5,9 +5,12 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 import data.CommandCategory;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.utils.FileUpload;
 import osu.api.OsuApiManager;
 import utils.DiscordChatUtils;
 import utils.FileUtils;
@@ -20,6 +23,7 @@ public class OsuApiOutputCommand extends Command {
 			  "Pings the api and returns the output verbatim.", 
 			  "Pings the api and returns the output verbatim.", 
 			  new String[]{"api user <userId>", "Returns apiv2 get user call."},
+			  new String[]{"api users <userId> <userId> <userId> <userId>...", "Returns apiv2 get users call, limit of 50 user ids."},
 			  new String[]{"api scores <userId> <best/recent/first> <limit> <offset> <include fails>", "Returns apiv2 get user scores call."});
 	}
 
@@ -34,6 +38,8 @@ public class OsuApiOutputCommand extends Command {
 			String post = "";
 			if(p_args[0].equalsIgnoreCase("user")) 
 				post = onUserCall(p_event, p_args);
+			else if(p_args[0].equalsIgnoreCase("users"))
+				post = onUsersCall(p_event, p_args);
 			else if(p_args[0].equalsIgnoreCase("scores")) 
 				post = onScoresCall(p_event, p_args);
 			
@@ -41,7 +47,7 @@ public class OsuApiOutputCommand extends Command {
 				File file = new File("request.txt");
 				FileUtils.writeToFile(file, post, false);
 				
-				p_event.getChannel().sendFile(file).complete();
+				p_event.getChannel().asTextChannel().sendFiles(FileUpload.fromData(file)).complete();
 				
 				file.delete();
 				return;
@@ -61,6 +67,15 @@ public class OsuApiOutputCommand extends Command {
 	private String onUserCall(MessageReceivedEvent p_event, String[] p_args) throws Exception {
 		String userId = URLEncoder.encode(p_args[1], StandardCharsets.UTF_8).replaceAll("\\+", "%20");
 		return OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/osu", new String("key=id").split("\\|"));
+	}
+	
+	private String onUsersCall(MessageReceivedEvent p_event, String[] p_args) throws Exception {
+		List<String> userIdList = new ArrayList<>();
+		
+		for(String userId : p_args)
+			userIdList.add("ids[]=" + userId);
+		
+		return OsuApiManager.getInstance().sendApiRequest("users", userIdList.toArray(new String[]{}));
 	}
 	
 	private String onScoresCall(MessageReceivedEvent p_event, String[] p_args) throws Exception {

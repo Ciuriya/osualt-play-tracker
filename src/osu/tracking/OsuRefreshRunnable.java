@@ -1,6 +1,8 @@
 package osu.tracking;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.logging.Level;
 
 import data.Log;
@@ -33,27 +35,43 @@ public abstract class OsuRefreshRunnable implements Runnable {
 			for(;;) {
 				if(m_stopping) return;
 				if(m_usersToRefresh.size() == 0) break;
-	
-				OsuTrackedUser user = m_usersToRefresh.removeFirst();
+				
+				List<OsuTrackedUser> users = new ArrayList<>();
+				
+				if(m_activityCycle > 0) {
+					for(OsuTrackedUser userToRefresh : new LinkedList<>(m_usersToRefresh)) {
+						if(!userToRefresh.isFetching()) {
+							users.add(userToRefresh);
+							m_usersToRefresh.remove(userToRefresh);
+							
+							if(users.size() >= 50) break;
+						}
+					}
+				} else users.add(m_usersToRefresh.removeFirst());
+					
 				int usersLeft = m_usersToRefresh.size();
 				long currentTime = System.currentTimeMillis();
-				long nextDelay = (m_lastStartTime + m_runnableRefreshDelay - currentTime) / (usersLeft == 0 ? 1 : usersLeft);
+				long nextDelay = (m_lastStartTime + m_runnableRefreshDelay - currentTime) / (usersLeft < 50 ? 50 : usersLeft) * 50;
 	
-				if(!user.isFetching()) {
-					user.setIsFetching(true);
+				if(m_activityCycle == 0) {
+					OsuTrackedUser user = users.get(0);
 					
-					if(refreshUser(user)) {
-						user.updateActivityCycle();
-						user.updateDatabaseEntry();
-						OsuTrackingManager.getInstance().resetFailedUserChecks(GeneralUtils.stringToInt(user.getUserId()));
+					if(!user.isFetching()) {
+						user.setIsFetching(true);
+						
+						if(refreshUser(user)) {
+							user.updateActivityCycle();
+							user.updateDatabaseEntry();
+							OsuTrackingManager.getInstance().resetFailedUserChecks(GeneralUtils.stringToInt(user.getUserId()));
+						}
+	
+						user.setLastRefreshTime();
+						
+						user.setJustMovedCycles(false);
+						user.setIsFetching(false);
 					}
-
-					user.setLastRefreshTime();
-					
-					user.setJustMovedCycles(false);
-					user.setIsFetching(false);
-				}
-				
+				} else updateUserActivities(users);
+								
 				long updatedDelay = nextDelay - (System.currentTimeMillis() - currentTime);
 				if(m_runnableRefreshDelay > 0 && updatedDelay > 0)
 					GeneralUtils.sleep((int) updatedDelay);
@@ -72,6 +90,8 @@ public abstract class OsuRefreshRunnable implements Runnable {
 	}
 	
 	public abstract boolean refreshUser(OsuTrackedUser p_user);
+	
+	public abstract boolean updateUserActivities(List<OsuTrackedUser> p_users);
 	
 	public int getInitialUserListSize() {
 		return m_initialUserListSize;
@@ -111,7 +131,7 @@ public abstract class OsuRefreshRunnable implements Runnable {
 		LinkedList<OsuTrackedUser> userListCopy = new LinkedList<>(m_usersToRefresh);
 		for(int i = 0; i < userListCopy.size(); ++i)
 			if(userListCopy.get(i).getUserId() == p_userId)
-				return i * getAverageUserRefreshDelay();
+				return i * m_cachedAverageUserRefreshDelay;
 		
 		return -1;
 	}

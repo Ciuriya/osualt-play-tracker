@@ -52,6 +52,17 @@ public class Constants {
 	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
+		new long[] {900, 0},        // 15m / not needed
+		new long[] {7200, 20},      // 2h  / 20s
+		new long[] {14400, 60},     // 4h  / 60s
+		new long[] {28800, 120},    // 8h  / 2m
+		new long[] {86400, 300},    // 1d  / 5m
+		new long[] {172800, 900},   // 2d  / 15m
+		new long[] {604800, 1800},  // 7d  / 30m
+		new long[] {1209600, 3600}, // 14d / 1h
+		
+		// USING SINGLE USER CALLS
+		/*
 		new long[] {1800, 0},        // 30m / not needed
 		new long[] {7200, 900},      // 2h  / 15m
 		new long[] {14400, 1800},	 // 4h  / 30m
@@ -63,6 +74,7 @@ public class Constants {
 		new long[] {604800, 7200},   // 7d  / 2h
 		new long[] {1209600, 10800}, // 14d / 3h
 		new long[] {2592000, 14400}  // 31d / 4h
+		*/
 	};
 	
 	// the osu!api's endpoint url
@@ -78,10 +90,13 @@ public class Constants {
 	public static final int OSU_CACHED_LATEST_PLAYS_AMOUNT = 5;
 	
 	// time in seconds before plays are uploaded to the remote server
-	public static final int OSU_PLAY_UPLOAD_INTERVAL = 60;
+	public static final int OSU_PLAY_UPLOAD_INTERVAL = 30;
 	
 	// time between pruning calls
 	public static final int OSU_PLAY_PRUNING_LOOP_INTERVAL = 3600;
+	
+	// minimum time in seconds for status messages to update (they keep updating until they are buried, after which it only checks against this time)
+	public static final int OSU_STATUS_MESSAGE_UPDATE_TIMESPAN = 300;
 	
 	// days before a play is DELETED from the db
 	public static final int OSU_PLAY_PRUNE_DELAY = 14;

@@ -11,11 +11,11 @@ import data.CommandCategory;
 import data.Log;
 import managers.ThreadingManager;
 import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageChannel;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.ChannelType;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import utils.Constants;
 import utils.DiscordChatUtils;
@@ -72,7 +72,7 @@ public abstract class Command {
 		return m_usages;
 	}
 	
-	public boolean canUse(User p_user, MessageChannel p_channel) {
+	public boolean canUse(User p_user, MessageChannelUnion p_channel) {
 		if(BotAdmins.isAdmin(p_user)) return true;
 		if(m_adminOnly) return false;
 		if(m_permission == null) return true;
@@ -89,7 +89,7 @@ public abstract class Command {
 		return false;
 	}
 	
-	protected void sendInvalidArgumentsError(MessageChannel p_channel) {
+	protected void sendInvalidArgumentsError(MessageChannelUnion p_channel) {
 		DiscordChatUtils.message(p_channel, "Invalid arguments! Use **`" + 
 								 Constants.DEFAULT_PREFIX + 
 								 "help " + m_triggers[0] + "`** for info on this command!");
