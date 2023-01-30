@@ -91,10 +91,6 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 		if(p_user.justMovedCycles())
 			return updateUserPlaycount(p_user);
 		
-		if(requestObject instanceof String && ((String) requestObject).equalsIgnoreCase("restricted")) {
-			OsuTrackingManager.getInstance().addFailedUserCheck(GeneralUtils.stringToInt(p_user.getUserId()));
-		}
-		
 		return false;
 	}
 	
@@ -137,7 +133,6 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 
 									user.updateActivityCycle();
 									user.updateDatabaseEntry();
-									OsuTrackingManager.getInstance().resetFailedUserChecks(GeneralUtils.stringToInt(user.getUserId()));
 								}
 							}
 						}

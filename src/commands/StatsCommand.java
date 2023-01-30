@@ -50,7 +50,7 @@ public class StatsCommand extends Command {
 							 stats.getOsuHtmlRequestsSent() + " / " + stats.getOsuHtmlRequestsFailed(), true);
 		}
 		
-		builder.addField("Total registered osu! users", osuTrackManager.getLoadedRegisteredUsers() + " (+" + osuTrackManager.getRestrictedUsers().size() + " restricted)", false);
+		builder.addField("Total registered osu! users", osuTrackManager.getLoadedRegisteredUsers() + " ", false);
 		builder.addField("Scores uploaded", String.valueOf(stats.getScoresUploaded()), true);
 		
 		for(int i = 0; i < Constants.OSU_ACTIVITY_CYCLES.length; ++i) {

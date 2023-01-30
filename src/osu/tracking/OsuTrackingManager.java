@@ -4,10 +4,8 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.logging.Level;
@@ -33,7 +31,6 @@ public class OsuTrackingManager {
 	private LinkedList<OsuRefreshRunnable> m_refreshRunnables;
 	private List<OsuTrackedUser> m_loadedUsers;
 	private List<Integer> m_loadedUserIds;
-	private Map<Integer, Integer> m_failedUserChecks;
 	
 	public static OsuTrackingManager getInstance() {
 		if(instance == null) instance = new OsuTrackingManager();
@@ -45,7 +42,6 @@ public class OsuTrackingManager {
 		m_refreshRunnables = new LinkedList<>();
 		m_loadedUsers = new ArrayList<>();
 		m_loadedUserIds = new ArrayList<>();
-		m_failedUserChecks = new HashMap<>();
 		
 		ThreadingManager.getInstance().executeAsync(new Runnable() {
 			public void run() {
@@ -59,13 +55,6 @@ public class OsuTrackingManager {
 						refreshRegisteredUsers();
 					}
 				}, registeredUserRefreshInterval, registeredUserRefreshInterval);
-				
-				long restrictedUserResetInterval = Constants.OSU_REGISTERED_USER_RESTRICTED_FLAG_RESET_LOOP_INTERVAL * 1000;
-				new Timer().scheduleAtFixedRate(new TimerTask() {
-					public void run() {
-						for(int userId : getRestrictedUsers()) resetFailedUserChecks(userId);
-					}
-				}, restrictedUserResetInterval, restrictedUserResetInterval);
 				
 				long osuPlayPruningInterval = Constants.OSU_PLAY_PRUNING_LOOP_INTERVAL * 1000;
 				new Timer().scheduleAtFixedRate(new TimerTask() {
@@ -89,31 +78,6 @@ public class OsuTrackingManager {
 		if(m_refreshRunnables.size() > p_cycle && m_refreshRunnables.size() > 0)
 			return m_refreshRunnables.get(p_cycle);
 		else return null;
-	}
-	
-	public int getFailedUserChecks(int p_userId) {
-		return m_failedUserChecks.getOrDefault(p_userId, 0);
-	}
-	
-	public List<Integer> getRestrictedUsers() {
-		return m_failedUserChecks.keySet().stream().filter(userId -> m_failedUserChecks.get(userId) >= Constants.OSU_REGISTERED_USER_CHECK_ALLOWED_TRIES).collect(Collectors.toList());
-	}
-	
-	public void addFailedUserCheck(int p_userId) {
-		int fails = getFailedUserChecks(p_userId) + 1;
-		m_failedUserChecks.put(p_userId, fails);
-
-		if(fails >= Constants.OSU_REGISTERED_USER_CHECK_ALLOWED_TRIES) {
-			List<Integer> list = new ArrayList<>();
-			
-			list.add(p_userId);
-			
-			removeRegisteredUsers(list);
-		}
-	}
-	
-	public void resetFailedUserChecks(int p_userId) {
-		m_failedUserChecks.remove(p_userId);
 	}
 	
 	private void startLoops() {
@@ -227,42 +191,31 @@ public class OsuTrackingManager {
 													  "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
 				
 				for(int userId : newUserIds) {
-					int fails = getFailedUserChecks(userId);
+					OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, String.valueOf(userId), "0");
+					Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 15000, false);
 					
-					if(fails < Constants.OSU_REGISTERED_USER_CHECK_ALLOWED_TRIES) {
-						OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, String.valueOf(userId), "0");
-						Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 15000, false);
-						boolean failed = false;
+					if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
+						JSONObject userJson = (JSONObject) userObject;
 						
-						if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
-							JSONObject userJson = (JSONObject) userObject;
+						if(userJson.has("username")) {
+							String username = userJson.getString("username");
+							osuUserInsertSt.setInt(1, userId);
+							osuUserInsertSt.setString(2, username);
+							osuUserInsertSt.setString(3, username);
 							
-							if(userJson.has("username")) {
-								String username = userJson.getString("username");
-								osuUserInsertSt.setInt(1, userId);
-								osuUserInsertSt.setString(2, username);
-								osuUserInsertSt.setString(3, username);
+							osuUserInsertSt.addBatch();
+							
+							JSONObject stats = userJson.optJSONObject("statistics");
+							
+							if(stats != null) {
+								OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, stats.optInt("play_count"));
+								m_loadedUsers.add(user);
+								m_loadedUserIds.add(userId);
 								
-								osuUserInsertSt.addBatch();
-								
-								JSONObject stats = userJson.optJSONObject("statistics");
-								
-								if(stats != null) {
-									OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, stats.optInt("play_count"));
-									m_loadedUsers.add(user);
-									m_loadedUserIds.add(userId);
-									
-									++successfullyAddedNewUserIds;
-									resetFailedUserChecks(userId);
-								}
-								
-								continue;
-							} else failed = true;
-						} else failed = true;
-						
-						if(failed) {
-							++fails;
-							m_failedUserChecks.put(userId, fails);
+								++successfullyAddedNewUserIds;
+							}
+							
+							continue;
 						}
 					}
 				}
@@ -286,11 +239,9 @@ public class OsuTrackingManager {
 		
 			if(!p_removedUsers.isEmpty()) removeRegisteredUsers(p_removedUsers);
 
-			int restrictedUserCount = newUserIds.size() - successfullyAddedNewUserIds;
-			Log.log(Level.INFO, "Updated registered users: " + (p_users.size() - restrictedUserCount) + " registered users, " + 
-																successfullyAddedNewUserIds + " added, " + 
-																p_removedUsers.size() + " removed, " +
-																restrictedUserCount + " restricted");
+			Log.log(Level.INFO, "Updated registered users: " + p_users.size() + " registered users, " + 
+															   successfullyAddedNewUserIds + " added, " + 
+															   p_removedUsers.size() + " removed");
 		}
 	}
 	

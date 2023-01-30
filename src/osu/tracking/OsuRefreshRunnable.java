@@ -62,7 +62,6 @@ public abstract class OsuRefreshRunnable implements Runnable {
 						if(refreshUser(user)) {
 							user.updateActivityCycle();
 							user.updateDatabaseEntry();
-							OsuTrackingManager.getInstance().resetFailedUserChecks(GeneralUtils.stringToInt(user.getUserId()));
 						}
 	
 						user.setLastRefreshTime();

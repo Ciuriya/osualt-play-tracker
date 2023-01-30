@@ -7,10 +7,8 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 
 import data.CommandCategory;
-import data.Log;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -93,15 +91,15 @@ public class OsuStatusCommand extends Command {
 		if(nextRefreshTime > waitCurrentTime) {
 			new Timer().schedule(new TimerTask() {
 				public void run() {
-					if(p_user.getLastStatusMessageTime() != p_sendTimeInUse) return;
-					
 					if(p_user.getLastRefreshTime().before(waitCurrentTimestamp)) {
 						updateEmbedAfterRefresh(p_message, p_originalSendTime, p_sendTimeInUse, System.currentTimeMillis() + 5000, p_user, p_username, p_activityCycle, p_authorId, p_debug);
 						return;
 					}
 					
-					boolean willRefresh = p_message.getChannel().getHistoryAfter(p_message, 26).complete().size() < 25 || 
-										  p_originalSendTime.getTime() + Constants.OSU_STATUS_MESSAGE_UPDATE_TIMESPAN * 1000 > System.currentTimeMillis();
+					long currentTimeMillis = System.currentTimeMillis();
+					long minUpdateTime = p_originalSendTime.getTime() + Constants.OSU_STATUS_MESSAGE_UPDATE_MIN_TIME * 1000;
+					long maxUpdateTime = p_originalSendTime.getTime() + Constants.OSU_STATUS_MESSAGE_UPDATE_MAX_TIME * 1000;
+					boolean willRefresh = p_user.getLastStatusMessageTime() == p_sendTimeInUse && (p_message.getChannel().getHistoryAfter(p_message, 26).complete().size() < 25 && maxUpdateTime > currentTimeMillis) || minUpdateTime > currentTimeMillis;
 					
 					int activityCycle = p_user.getActivityCycle();
 					OsuTrackingManager osuTrackManager = OsuTrackingManager.getInstance();

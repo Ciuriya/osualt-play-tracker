@@ -95,17 +95,14 @@ public class Constants {
 	// time between pruning calls
 	public static final int OSU_PLAY_PRUNING_LOOP_INTERVAL = 3600;
 	
-	// minimum time in seconds for status messages to update (they keep updating until they are buried, after which it only checks against this time)
-	public static final int OSU_STATUS_MESSAGE_UPDATE_TIMESPAN = 300;
+	// minimum time in seconds for status messages to update (they keep updating until they are buried, after which it checks against this time and the max time)
+	public static final int OSU_STATUS_MESSAGE_UPDATE_MIN_TIME = 300;
+	
+	// maximum time in seconds for status messages to update
+	public static final int OSU_STATUS_MESSAGE_UPDATE_MAX_TIME = 43200;
 	
 	// days before a play is DELETED from the db
 	public static final int OSU_PLAY_PRUNE_DELAY = 14;
-	
-	// tries before we consider the registered user as restricted
-	public static final int OSU_REGISTERED_USER_CHECK_ALLOWED_TRIES = 3;
-	
-	// time in seconds until restricted users get a few more tries when refreshing registered users
-	public static final int OSU_REGISTERED_USER_RESTRICTED_FLAG_RESET_LOOP_INTERVAL = 86400;
 	
 	// how many fails is a single request allowed until it is skipped by the regulator
 	public static final int OSU_REQUEST_FAILS_ALLOWED = 3;
