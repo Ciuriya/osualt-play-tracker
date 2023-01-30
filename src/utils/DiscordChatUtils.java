@@ -8,12 +8,13 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 
 public class DiscordChatUtils {
 
 	public static void message(MessageChannelUnion p_channel, String p_message) {
+		if(!p_channel.canTalk()) return;
+		
 		// cut the message into parts discord can send (<4000 characters per message)
 		// 3960 gives us some leeway just in case
 		for(int i = 0; i < (int) Math.ceil(p_message.length() / 3960f); i++) {
@@ -36,6 +37,8 @@ public class DiscordChatUtils {
 	}
 	
 	public static void embed(MessageChannelUnion p_channel, MessageEmbed p_embed) {
+		if(!p_channel.canTalk()) return;
+		
 		p_channel.sendMessageEmbeds(p_embed).queue(
 				(message) -> Log.log(Level.INFO, "{Embed sent in " + 
 												 getChannelLogString(p_channel) + "} " + 
@@ -46,6 +49,8 @@ public class DiscordChatUtils {
 	}
 	
 	public static CompletableFuture<Message> embedWithFuture(MessageChannelUnion p_channel, MessageEmbed p_embed) {
+		if(!p_channel.canTalk()) return new CompletableFuture<Message>();
+		
 		CompletableFuture<Message> future = p_channel.sendMessageEmbeds(p_embed).submit();
 		
 		return future.whenComplete((message, error) -> {
@@ -62,8 +67,8 @@ public class DiscordChatUtils {
 	public static String getChannelLogString(MessageChannelUnion p_channel) {
 		if(p_channel.getType() == ChannelType.PRIVATE)
 			return "Private/" + ((PrivateChannel) p_channel).getUser().getId();
-		else if(p_channel.getType() == ChannelType.TEXT)
-			return ((TextChannel) p_channel).getGuild().getName() + "#" + p_channel.getName();
+		else if(p_channel.getType().isGuild())
+			return p_channel.asGuildMessageChannel().getGuild().getName() + "#" + p_channel.getName();
 		else return "";
 	}
 }

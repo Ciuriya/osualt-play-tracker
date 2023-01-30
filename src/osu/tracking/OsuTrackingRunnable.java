@@ -15,7 +15,6 @@ import osu.api.requests.OsuScoresRequest;
 import osu.api.requests.OsuUserRequest;
 import osu.api.requests.OsuUsersRequest;
 import utils.Constants;
-import utils.GeneralUtils;
 import utils.OsuUtils;
 
 public class OsuTrackingRunnable extends OsuRefreshRunnable {

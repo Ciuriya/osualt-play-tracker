@@ -47,7 +47,7 @@ public class OsuApiOutputCommand extends Command {
 				File file = new File("request.txt");
 				FileUtils.writeToFile(file, post, false);
 				
-				p_event.getChannel().asTextChannel().sendFiles(FileUpload.fromData(file)).complete();
+				p_event.getChannel().sendFiles(FileUpload.fromData(file)).complete();
 				
 				file.delete();
 				return;
