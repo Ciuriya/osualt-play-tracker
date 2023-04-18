@@ -68,12 +68,6 @@ public class Log {
 	}
 }
 
-/**
- * A local class that formats logger output to show useful information 
- * like timestamp and source class/function.
- * 
- * @author Smc
- */
 class LogFormat extends Formatter {
 
 	@Override

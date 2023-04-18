@@ -16,15 +16,8 @@ public class MessageListener extends ListenerAdapter {
 	public void onMessageReceived(MessageReceivedEvent p_event) {
 		if(p_event.getAuthor().isBot()) return;
 		
-		if(p_event.getAuthor().getId().equalsIgnoreCase("137071064458067970")) {
+		if(p_event.getAuthor().getId().equalsIgnoreCase("137071064458067970"))
 			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83D\uDED0")).queue();
-			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF5")).queue();
-			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF7")).queue();
-			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF4")).queue();
-			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDEA")).queue();
-			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF8")).queue();
-			p_event.getMessage().addReaction(Emoji.fromUnicode("\uD83C\uDDF9")).queue();
-		}
 		
 		String message = p_event.getMessage().getContentRaw();
 		

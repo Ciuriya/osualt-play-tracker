@@ -4,7 +4,7 @@ import net.dv8tion.jda.api.entities.User;
 
 public enum BotAdmins {
 	
-	Smc("91302128328392704");
+	Ciuriya("91302128328392704");
 	
 	private String m_discordId;
 	
