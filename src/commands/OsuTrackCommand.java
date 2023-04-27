@@ -39,7 +39,7 @@ public class OsuTrackCommand extends Command {
 			refreshRunnable.removeUser(userId);
 		
 		user.setLastActiveTime();
-		user.updateActivityCycle();
+		user.forceSetActivityCycle(0);
 		
 		DiscordChatUtils.message(p_event.getChannel(), "Moved " + OsuUtils.getOsuPlayerUsernameFromIdWithApi(userId, true) + 
 				   									   " to the live tracking cycle!");

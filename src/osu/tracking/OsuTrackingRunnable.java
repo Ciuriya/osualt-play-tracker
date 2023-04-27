@@ -10,9 +10,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import osu.api.OsuRequestRegulator;
-import osu.api.OsuRequestTypes;
 import osu.api.requests.OsuScoresRequest;
-import osu.api.requests.OsuUserRequest;
 import osu.api.requests.OsuUsersRequest;
 import utils.Constants;
 import utils.OsuUtils;
@@ -27,7 +25,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 	public boolean refreshUser(OsuTrackedUser p_user) {
 		OsuScoresRequest request = new OsuScoresRequest(p_user.getUserId(), "recent", 
 														String.valueOf(Constants.OSU_RECENT_PLAYS_LIMIT), 
-														"0", p_user.justMovedCycles() ? "false" : "true");
+														"0", "true");
 		Object requestObject = OsuRequestRegulator.getInstance().sendRequestSync(request, 30000, false);
 
 		if(OsuUtils.isAnswerValid(requestObject, JSONArray.class)) {
@@ -36,6 +34,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			List<OsuPlay> playsToUpload = new ArrayList<>();
 			Timestamp lastFetchedDate = p_user.getLastUpdateTime();
 			Timestamp latestPlayDate = p_user.getLastUpdateTime();
+			Timestamp lastActiveDate = p_user.getLastActiveTime();
 			int addedPlaycount = 0;
 
 			if(!array.isEmpty()) {
@@ -61,7 +60,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 						}
 						
 						if(canUploadPlay) {
-							++addedPlaycount;
+							if(datePlayed.after(lastActiveDate)) ++addedPlaycount;
 							
 							if(isPlayUploadable)
 								playsToUpload.add(play);
@@ -74,9 +73,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			
 			p_user.setLastUpdateTime(lastFetchedDate);
 			
-			if(p_user.justMovedCycles())
-				updateUserPlaycount(p_user);
-			else updateUserActivity(p_user, p_user.getPlaycount() + addedPlaycount);
+			updateUserActivity(p_user, p_user.getPlaycount() + addedPlaycount);
 			
 			if(!playsToUpload.isEmpty()) {
 				OsuPlay.saveToDatabase(playsToUpload);
@@ -86,9 +83,6 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			
 			return true;
 		}
-		
-		if(p_user.justMovedCycles())
-			return updateUserPlaycount(p_user);
 		
 		return false;
 	}
@@ -128,9 +122,12 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 								int playcount = osuObject.optInt("play_count");
 								
 								if(playcount > 0) {
-									updateUserActivity(user, playcount);
+									if(updateUserActivity(user, playcount)) {
+										user.forceSetActivityCycle(0);
+									} else {
+										user.updateActivityCycle();
+									}
 
-									user.updateActivityCycle();
 									user.updateDatabaseEntry();
 								}
 							}
@@ -144,26 +141,10 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 		
 		for(OsuTrackedUser user : p_users) {
 			user.setLastRefreshTime();
-			user.setJustMovedCycles(false);
 			user.setIsFetching(false);
 		}
 		
 		return isValidFetch;
-	}
-	
-	private boolean updateUserPlaycount(OsuTrackedUser p_user) {
-		OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.HTML, String.valueOf(p_user.getUserId()), "0");
-		Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 30000, false);
-
-		if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
-			JSONObject userJson = (JSONObject) userObject;
-			JSONObject statisticsObject = userJson.optJSONObject("statistics");
-			
-			updateUserActivity(p_user, statisticsObject != null ? statisticsObject.optInt("play_count", 0) : 0);
-			return true;
-		}
-		
-		return false;
 	}
 	
 	private boolean updateUserActivity(OsuTrackedUser p_user, int p_playcount) {

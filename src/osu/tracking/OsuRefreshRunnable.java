@@ -60,13 +60,12 @@ public abstract class OsuRefreshRunnable implements Runnable {
 						user.setIsFetching(true);
 						
 						if(refreshUser(user)) {
-							user.updateActivityCycle();
+							user.forceSetActivityCycle(1);
 							user.updateDatabaseEntry();
 						}
 	
 						user.setLastRefreshTime();
 						
-						user.setJustMovedCycles(false);
 						user.setIsFetching(false);
 					}
 				} else updateUserActivities(users);
@@ -83,6 +82,10 @@ public abstract class OsuRefreshRunnable implements Runnable {
 		long expectedEndTime = m_lastStartTime + m_runnableRefreshDelay;
 		if(expectedEndTime > time) {
 			GeneralUtils.sleep((int) (expectedEndTime - time));
+		}
+		
+		if(time - m_lastStartTime < 5000) {
+			GeneralUtils.sleep((int) (m_lastStartTime + 5000 - time));
 		}
 		
 		callStart();
@@ -153,7 +156,8 @@ public abstract class OsuRefreshRunnable implements Runnable {
 	}
 	
 	public void callStart() {
-		m_cachedAverageUserRefreshDelay = getAverageUserRefreshDelay();
+		m_cachedAverageUserRefreshDelay += getAverageUserRefreshDelay();
+		m_cachedAverageUserRefreshDelay /= 2;
 		m_usersToRefresh.clear();
 		OsuTrackingManager.getInstance().startLoop(this, m_runnableRefreshDelay);
 	}

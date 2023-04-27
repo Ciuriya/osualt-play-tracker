@@ -52,8 +52,9 @@ public class Constants {
 	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
-		new long[] {900, 0},        // 15m / not needed
-		new long[] {7200, 20},      // 2h  / 20s
+		new long[] {30, 0},         // 30s / not needed
+		new long[] {900, 20},       // 15m / 20s
+		new long[] {7200, 40},      // 2h  / 40s
 		new long[] {14400, 60},     // 4h  / 60s
 		new long[] {28800, 120},    // 8h  / 2m
 		new long[] {86400, 300},    // 1d  / 5m

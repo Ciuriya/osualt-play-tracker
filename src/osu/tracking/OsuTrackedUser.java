@@ -30,7 +30,6 @@ public class OsuTrackedUser {
 	private Timestamp m_lastStatusMessageTime;
 	
 	private int m_activityCycle = 0;
-	private boolean m_justMovedCycles = false;
 	
 	private boolean m_isFetching;
 	private boolean m_isDeleted;
@@ -50,8 +49,6 @@ public class OsuTrackedUser {
 		setLastUploadedTime();
 		
 		updateActivityCycle();
-		
-		if(m_activityCycle == 0) setJustMovedCycles(true);
 	}
 	
 	public OsuTrackedUser(ResultSet p_resultSet) throws SQLException {
@@ -60,8 +57,6 @@ public class OsuTrackedUser {
 		
 		loadFromSql(p_resultSet);
 		updateActivityCycle();
-		
-		if(m_activityCycle == 0) setJustMovedCycles(true);
 	}
 	
 	private void loadFromSql(ResultSet p_resultSet) throws SQLException {
@@ -117,10 +112,6 @@ public class OsuTrackedUser {
 	
 	public boolean isDeleted() {
 		return m_isDeleted;
-	}
-	
-	public boolean justMovedCycles() {
-		return m_justMovedCycles;
 	}
 	
 	public List<OsuPlay> getCachedLatestPlays(int p_amount) {
@@ -233,14 +224,13 @@ public class OsuTrackedUser {
 		m_isDeleted = p_isDeleted;
 	}
 	
-	public void setJustMovedCycles(boolean p_justMovedCycles) {
-		m_justMovedCycles = p_justMovedCycles;
+	public void forceSetActivityCycle(int p_activityCycle) {
+		m_activityCycle = p_activityCycle;
 	}
 
 	public int updateActivityCycle() {
 		Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 		long currentTimeMs = calendar.getTime().getTime();
-		long prevCycle = m_activityCycle;
 		
 		m_activityCycle = 0;
 		for(long[] cycle : Constants.OSU_ACTIVITY_CYCLES)
@@ -250,8 +240,6 @@ public class OsuTrackedUser {
 		
 		if(m_activityCycle >= Constants.OSU_ACTIVITY_CYCLES.length)
 			m_activityCycle = Constants.OSU_ACTIVITY_CYCLES.length - 1;
-		
-		if(prevCycle != m_activityCycle) m_justMovedCycles = true;
 		
 		return m_activityCycle;
 	}
