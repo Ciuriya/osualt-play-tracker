@@ -30,17 +30,35 @@ import utils.TimeUtils;
 public class OsuStatsCommand extends Command {
 
 	public OsuStatsCommand() {
-		super(null, false, true, CommandCategory.OSU, new String[]{"osustats", "stats"}, 
+		super(null, false, true, CommandCategory.OSU, new String[]{"stats", "osustats"}, 
 			  "Shows miscellaneous stats for the registered osu! player.", 
 			  "Shows miscellaneous stats for the registered osu! player.",
-			  new String[]{"osustats", "Shows miscellaneous stats for the osu! player linked to the discord user using this command."},
-			  new String[]{"osustats <osu! name>", "Shows miscellaneous stats for the given osu! player.\n" +
-													"Example: **`{prefix}osustats nathan on osu`**"});
+			  new String[]{"stats", "Shows miscellaneous stats for the osu! player linked to the discord user using this command."},
+			  new String[]{"stats <osu! name>", "Shows miscellaneous stats for the given osu! player.\n" +
+			  									"Example: **`{prefix}stats nathan on osu`**"},
+			  new String[]{"stats <days>", "Shows last <days> of miscellaneous stats for the osu! player linked to the discord user using this command .\n" +
+			  							   "Example: **`{prefix}stats 7`**"});
 	}
 
 	@Override
 	public void onCommand(MessageReceivedEvent p_event, String[] p_args) {
-		String userId = getUserIdFromArgsSimple(p_event, p_args);
+		int intArg = -1;
+		if (p_args.length != 0) {
+			intArg = GeneralUtils.stringToInt(p_args[p_args.length - 1]);
+			
+			if(intArg != -1) 
+				intArg = Math.max(1, Math.min(Constants.OSU_PLAY_PRUNE_DELAY, intArg));
+		}
+		
+		String userId = "";
+		String[] args = p_args;
+		if (intArg != -1) {
+			List<String> trimmedList = new ArrayList<String>();
+			for(int i = 0; i < p_args.length - 1; ++i) trimmedList.add(p_args[i]);
+			args = trimmedList.toArray(new String[]{});
+		}
+		
+		userId = getUserIdFromArgsSimple(p_event, args);
 		
 		if(userId.isEmpty()) return;
 		
@@ -49,7 +67,7 @@ public class OsuStatsCommand extends Command {
 		OsuTrackedUser user = osuTrackManager.getUser(userId);
 		
 		if(user == null) {
-			DiscordChatUtils.message(p_event.getChannel(), "This osu! player isn't registered! :skull:\nhttp://smcmax.com/s/readinfo.gif");
+			DiscordChatUtils.message(p_event.getChannel(), "This osu! player isn't registered! :skull:\nhttp://ciuriya.com/s/readinfo.gif");
 			return;
 		}
 		
@@ -64,38 +82,40 @@ public class OsuStatsCommand extends Command {
 		String cachingLengthDisplay = TimeUtils.toDuration(TimeUnit.DAYS.toMillis(Constants.OSU_PLAY_PRUNE_DELAY), false);
 		builder.setDescription("All values below **ONLY** account for new **HIGHEST SCORE** plays on maps played in the last " + cachingLengthDisplay + " and discards any other plays.");
 		
+		int hours = 24 * (intArg == -1 ? 1 : intArg);
+		String timespanDisplay = hours == 24 ? "24h" : ((int) Math.floor(hours / 24) + "d" + (hours % 24 > 0 ? (hours % 24) + "h" : ""));
 		List<OsuPlay> allCachedPlays = getAllCachedPlays(userId);
-		List<OsuPlay> lastDayCachedPlays = filterCachedPlaysInLastDurationTimeFrame(allCachedPlays, 24 * 60 * 60 * 1000);
+		List<OsuPlay> lastDayCachedPlays = filterCachedPlaysInLastDurationTimeFrame(allCachedPlays, hours * 60 * 60 * 1000);
 		
-		builder.addField("Saved scores for last 24h/" + cachingLengthDisplay, 
+		builder.addField("Saved scores for last " + timespanDisplay + "/" + cachingLengthDisplay, 
 						 GeneralUtils.addCommasToNumber(lastDayCachedPlays.size()) + " / " + 
 						 GeneralUtils.addCommasToNumber(allCachedPlays.size()), true);
 		
-		builder.addField("Plays in last 24h", 
+		builder.addField("Plays in last " + timespanDisplay, 
 						 getUniqueRanksInPlays(lastDayCachedPlays), false);
 
 		builder.addField("Plays in last " + cachingLengthDisplay, 
 		 		 		 getUniqueRanksInPlays(allCachedPlays), false);
 		
-		builder.addField("Highest score in last 24h/" + cachingLengthDisplay, 
+		builder.addField("Highest score in last " + timespanDisplay + "/" + cachingLengthDisplay, 
 						 getMaxScoreInPlays(lastDayCachedPlays) + " / " + getMaxScoreInPlays(allCachedPlays), true);
 		
-		builder.addField("Highest combo in last 24h/" + cachingLengthDisplay, 
+		builder.addField("Highest combo in last " + timespanDisplay + "/" + cachingLengthDisplay, 
 				 		 getMaxComboInPlays(lastDayCachedPlays) + " / " + getMaxComboInPlays(allCachedPlays), true);
 		
-		builder.addField("Highest pp in last 24h/" + cachingLengthDisplay, 
+		builder.addField("Highest pp in last " + timespanDisplay + "/" + cachingLengthDisplay, 
 				 		 getMaxPPInPlays(lastDayCachedPlays) + " / " + getMaxPPInPlays(allCachedPlays), true);
 		
-		builder.addField("Average score per play in last 24h/" + cachingLengthDisplay, 
+		builder.addField("Average score per play in last " + timespanDisplay + "/" + cachingLengthDisplay, 
 				 		 getAverageScorePerPlay(lastDayCachedPlays) + " / " + getAverageScorePerPlay(allCachedPlays), true);
 		
-		builder.addField("Average accuracy in last 24h/" + cachingLengthDisplay, 
+		builder.addField("Average accuracy in last " + timespanDisplay + "/" + cachingLengthDisplay, 
 				 		 getAverageAccuracyInPlays(lastDayCachedPlays) + " / " + getAverageAccuracyInPlays(allCachedPlays), true);
 		
-		builder.addField("Average pp per play in last 24h/" + cachingLengthDisplay,
+		builder.addField("Average pp per play in last " + timespanDisplay + "/" + cachingLengthDisplay,
 				 		 getAveragePPInPlays(lastDayCachedPlays) + " / " + getAveragePPInPlays(allCachedPlays), true);
 		
-		builder.addField("Raw ranked score in last 24h/" + cachingLengthDisplay,
+		builder.addField("Raw ranked score in last " + timespanDisplay + "/" + cachingLengthDisplay,
 						 GeneralUtils.formatLargeNumber(getTotalScoreInPlays(lastDayCachedPlays)) + " / " + 
 						 GeneralUtils.formatLargeNumber(getTotalScoreInPlays(allCachedPlays)), true);
 

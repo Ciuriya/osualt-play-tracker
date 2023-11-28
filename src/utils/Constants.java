@@ -27,7 +27,7 @@ public class Constants {
 	public static final Color DEFAULT_EMBED_COLOR = Color.CYAN;
 	
 	// the default footer used throughout the bot
-	public static final String DEFAULT_FOOTER = "Made by Ciuriya#0037 (Ciuriya on osu!)";
+	public static final String DEFAULT_FOOTER = "Made by Ciuriya";
 	
 	// the link to the official support server
 	public static final String SUPPORT_SERVER_LINK = "https://discord.gg/VZWRZZXcW4";
