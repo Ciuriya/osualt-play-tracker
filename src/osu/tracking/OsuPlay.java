@@ -7,9 +7,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Level;
 
 import org.json.JSONArray;
@@ -18,7 +16,6 @@ import org.json.JSONObject;
 import data.Database;
 import data.Log;
 import managers.DatabaseManager;
-import osu.api.Mods;
 import utils.Constants;
 import utils.GeneralUtils;
 import utils.TimeUtils;
@@ -35,7 +32,7 @@ public class OsuPlay {
 	private int m_countMiss;
 	private int m_combo;
 	private boolean m_perfect;
-	private long m_enabledMods;
+	private String m_mods;
 	private Timestamp m_datePlayed;
 	private String m_rank;
 	private double m_pp;
@@ -78,24 +75,8 @@ public class OsuPlay {
 			
 			JSONArray modArray = p_jsonPlay.optJSONArray("mods");
 			
-			if(modArray != null) {
-				Set<String> modShortNames = new HashSet<>();
-				
-				for(int i = 0; i < modArray.length(); ++i)
-					modShortNames.add(modArray.optString(i, ""));
-				
-				for(String modShortName : new ArrayList<String>(modShortNames))
-					if(modShortName.contentEquals(Mods.Nightcore.getShortName())) {
-						modShortNames.add(Mods.DoubleTime.getShortName());
-					} else if(modShortName.contentEquals(Mods.Perfect.getShortName())) {
-						modShortNames.add(Mods.SuddenDeath.getShortName());
-					}
-				
-				List<String> modNames = new ArrayList<>();
-				modNames.addAll(modShortNames);
-				
-				m_enabledMods = Mods.getBitFromShortNames(modNames);
-			} else m_enabledMods = 0;
+			if (modArray == null) m_mods = "[]";
+			else m_mods = modArray.toString();
 			
 			// 2007-01-01T12:34:56+00:00 could be + or -
 			String datePlayedString = p_jsonPlay.optString("created_at", "2007-01-01T00:00:00+00:00").replace("T", " ");
@@ -137,7 +118,7 @@ public class OsuPlay {
 		m_countMiss = p_resultSet.getInt(8);
 		m_combo = p_resultSet.getInt(9);
 		m_perfect = p_resultSet.getBoolean(10);
-		m_enabledMods = p_resultSet.getInt(11);
+		m_mods = p_resultSet.getString(11);
 		m_datePlayed = p_resultSet.getTimestamp(12);
 		m_rank = p_resultSet.getString(13);
 		m_pp = p_resultSet.getDouble(14);
@@ -181,7 +162,7 @@ public class OsuPlay {
 			PreparedStatement st = conn.prepareStatement(
 								   "INSERT IGNORE INTO `osu-play` " +
 								   "(`score_id`, `user_id`, `beatmap_id`, `score`, `count300`, `count100`, `count50`, `countmiss`, " + 
-								   "`combo`, `perfect`, `enabled_mods`, `date_played`, `rank`, `pp`, `replay_available`, `uploaded`, " + 
+								   "`combo`, `perfect`, `mods`, `date_played`, `rank`, `pp`, `replay_available`, `uploaded`, " + 
 								   "`insertion-date`, `title`, `accuracy`, `upload_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
@@ -196,7 +177,7 @@ public class OsuPlay {
 				st.setInt(8, play.m_countMiss);
 				st.setInt(9, play.m_combo);
 				st.setBoolean(10, play.m_perfect);
-				st.setLong(11, play.m_enabledMods);
+				st.setString(11, play.m_mods);
 				st.setTimestamp(12, play.m_datePlayed, calendar);
 				st.setString(13, play.m_rank);
 				st.setDouble(14, play.m_pp);
@@ -336,8 +317,8 @@ public class OsuPlay {
 		return m_perfect;
 	}
 	
-	public long getEnabledMods() {
-		return m_enabledMods;
+	public String getMods() {
+		return m_mods;
 	}
 	
 	public Timestamp getDatePlayed() {
@@ -400,6 +381,6 @@ public class OsuPlay {
 		OsuPlay other = (OsuPlay) o;
 		
 		return this.getUserId().equals(other.getUserId()) && this.getScore() == other.getScore() && this.getBeatmapId() == other.getBeatmapId() && 
-			   this.getEnabledMods() == other.getEnabledMods() && this.getAccuracy() == other.getAccuracy() && this.getDatePlayed().getTime() == this.getDatePlayed().getTime();
+			   this.getMods().contentEquals(other.getMods()) && this.getAccuracy() == other.getAccuracy() && this.getDatePlayed().getTime() == this.getDatePlayed().getTime();
 	}
 }

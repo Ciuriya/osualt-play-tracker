@@ -85,6 +85,7 @@ public class OsuApiManager {
 		connection.setRequestProperty("Content-Type", "application/json");
 		connection.setRequestProperty("charset", "utf-8");
 		connection.setRequestProperty("Content-Length", Integer.toString(p_body.getBytes().length));
+		connection.setRequestProperty("x-api-version", "20240130");
 		
 		if(!m_accessToken.isEmpty())
 			connection.setRequestProperty("Authorization", "Bearer " + m_accessToken);

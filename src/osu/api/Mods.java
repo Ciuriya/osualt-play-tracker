@@ -3,110 +3,94 @@ package osu.api;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 public enum Mods{
 	
-	None(0, "NM"), 
-	NoFail(1, "NF"), 
-	Easy(2, "EZ"),
-	TouchDevice(4, "TD"),
-	Hidden(8, "HD"), 
-	HardRock(16, "HR"), 
-	SuddenDeath(32, "SD"), 
-	DoubleTime(64, "DT"),
-	Relax(128, "RL"), 
-	HalfTime(256, "HT"), 
-	Nightcore(512, "NC"), 
-	Flashlight(1024, "FL"), 
-	Autoplay(2048, "AU"),
-	SpunOut(4096, "SO"), 
-	Autopilot(8192, "AP"),
-	Perfect(16384, "PF"),
-	Key4(32768, "4K"),
-	Key5(65536, "5K"),
-	Key6(131072, "6K"),
-	Key7(262144, "7K"),
-	Key8(524288, "8K"),
-	FadeIn(1048576, "FI"),
-	Random(2097152, "RA"),
-	Cinema(4194304, "CN"),
-	Target(8388608, "TP"),
-	Key9(16777216, "9K"),
-	Key10(33554432, "10K"),
-	Key1(67108864, "1K"),
-	Key3(134217728, "3K"),
-	Key2(268435456, "2K"),
-	ScoreV2(536870912, "V2"),
-	Mirror(1073741824, "MR");
+	None(""),
+	Easy("EZ"),
+	NoFail("NF"),
+	HalfTime("HT"),
+	Daycore("DC"),
+	HardRock("HR"),
+	SuddenDeath("SD"),
+	Perfect("PF"),
+	DoubleTime("DT"),
+	Nightcore("NC"),
+	Hidden("HD"),
+	Flashlight("FL"),
+	Blinds("BL"),
+	StrictTracking("ST"),
+	AccuracyChallenge("AC"),
+	TargetPractice("TP"),
+	DifficultyAdjust("DA"),
+	Classic("CL"),
+	Random("RD"),
+	Mirror("MR"),
+	Alternate("AL"),
+	SingleTap("SG"),
+	Autoplay("AT"),
+	Cinema("CN"),
+	Relax("RX"),
+	Autopilot("AP"),
+	SpunOut("SO"),
+	Transform("TR"),
+	Wiggle("WG"),
+	SpinIn("SI"),
+	Grow("GR"),
+	Deflate("DF"),
+	WindUp("WU"),
+	WindDown("WD"),
+	Traceable("TC"),
+	BarrelRoll("BR"),
+	ApproachDifferent("AD"),
+	Muted("MU"),
+	NoScope("NS"),
+	Magnetised("MG"),
+	Repel("RP"),
+	AdaptiveSpeed("AS"),
+	FreezeFrame("FR"),
+	Bubbles("BU"),
+	Synesthesia("SY"),
+	Depth("DP"),
+	TouchDevice("TD"),
+	ScoreV2("SV2");
 	
-	long m_bit;
-	String m_shortName;
+	String m_acronym;
 	
-	Mods(int p_bit, String p_shortName) {
-		this.m_bit = p_bit;
-		this.m_shortName = p_shortName;
+	Mods(String p_acronym) {
+		this.m_acronym = p_acronym;
 	}
 	
-	public long getBit(){
-		return m_bit;
+	public String getAcronym() {
+		return m_acronym;
 	}
 	
-	public String getShortName(){
-		return m_shortName;
+	public static List<Mods> getModsFromJson(String arrayStr) {
+		return getModsFromJson(new JSONArray(arrayStr));
 	}
 	
-	public static long getBitFromShortNames(List<String> p_modShortNames) {
-		long bits = 0;
+	public static List<Mods> getModsFromJson(JSONArray array) {
+		List<Mods> mods = new ArrayList<Mods>();
 		
-		for(String sMod : p_modShortNames)
-			for(Mods mod : Mods.values())
-				if(mod.getShortName().equalsIgnoreCase(sMod) ||
-					mod.name().equalsIgnoreCase(sMod))
-					bits += mod.getBit();
+		if (array == null || array.length() == 0) return mods;
+		
+		for(int i = 0; i < array.length(); ++i) {
+			JSONObject modObj = array.optJSONObject(i);
 			
-		
-		return bits;
-	}
-
-	public static long getBitFromString(String sMods){
-		long bits = 0;
-		
-		for(String sMod : sMods.split(","))
-			for(Mods mod : Mods.values())
-				if(mod.getShortName().equalsIgnoreCase(sMod) ||
-					mod.name().equalsIgnoreCase(sMod))
-					bits += mod.getBit();
-			
-		
-		return bits;
-	}
-	
-	public static List<Mods> getModsFromBit(long p_modsUsed){
-		List<Mods> mods = new ArrayList<>();
-		long used = p_modsUsed;
-		
-		if(used == 0) return mods;
-		
-		for(long i = 1073741824; i >= 1; i /= 2) {
-			Mods mod = Mods.getMod(i);
-			
-			if(used >= i) {
-				mods.add(mod);
-				used -= i;
-			}
+			if (modObj != null && modObj.has("acronym"))
+				mods.add(getMod(modObj.getString("acronym")));
 		}
-		
-		if(mods.contains(Mods.None)) mods.remove(Mods.None);
 		
 		return mods;
 	}
 	
-	public static long getBitFromMods(List<Mods> p_mods) {
-		long modsUsed = 0;
+	public static Mods getMod(String p_acronym) {
+		for(Mods mod : Mods.values())
+			if(mod.getAcronym().contentEquals(p_acronym)) return mod;
 		
-		for(Mods mod : p_mods)
-			modsUsed += mod.getBit();
-		
-		return modsUsed;
+		return Mods.None;
 	}
 	
 	public static String getModDisplay(List<Mods> p_mods) {
@@ -121,15 +105,8 @@ public enum Mods{
 			displayMods.remove(Mods.SuddenDeath);
 			
 		for(Mods mod : displayMods)
-			display = mod.getShortName() + display;
+			display = mod.getAcronym() + display;
 		
 		return display.length() == 0 ? "" : "+" + display;
-	}
-	
-	public static Mods getMod(long p_bit) {
-		for(Mods mod : Mods.values())
-			if(mod.getBit() == p_bit) return mod;
-		
-		return Mods.None;
 	}
 }

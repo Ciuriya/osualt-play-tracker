@@ -14,6 +14,7 @@ import data.Database;
 import data.Log;
 import managers.ApplicationStats;
 import managers.DatabaseManager;
+import osu.api.LegacyMods;
 import osu.api.Mods;
 import utils.Constants;
 import utils.GeneralUtils;
@@ -272,7 +273,9 @@ public class OsuTrackUploadManager {
 					continue;
 				}
 				
-				List<Mods> mods = Mods.getModsFromBit(play.getEnabledMods());
+				List<Mods> newMods = Mods.getModsFromJson(play.getMods());
+				long legacyModsBit = LegacyMods.getBitFromNewMods(newMods);
+				List<LegacyMods> mods = LegacyMods.getModsFromBit(legacyModsBit);
 				
 				st.setInt(1, GeneralUtils.stringToInt(play.getUserId()));
 				st.setLong(2, play.getBeatmapId());
@@ -283,23 +286,23 @@ public class OsuTrackUploadManager {
 				st.setInt(7, play.getCountMiss());
 				st.setInt(8, play.getCombo());
 				st.setInt(9, play.isPerfect() ? 1 : 0);
-				st.setLong(10, play.getEnabledMods());
+				st.setLong(10, legacyModsBit);
 				st.setTimestamp(11, play.getDatePlayed(), calendar);
 				st.setString(12, play.getRank());
 				st.setDouble(13, play.getPP());
 				st.setInt(14, play.isReplayAvailable() ? 1 : 0);
-				st.setBoolean(15, mods.contains(Mods.Hidden));
-				st.setBoolean(16, mods.contains(Mods.HardRock));
-				st.setBoolean(17, mods.contains(Mods.DoubleTime));
-				st.setBoolean(18, mods.contains(Mods.Flashlight));
-				st.setBoolean(19, mods.contains(Mods.HalfTime));
-				st.setBoolean(20, mods.contains(Mods.Easy));
-				st.setBoolean(21, mods.contains(Mods.NoFail));
-				st.setBoolean(22, mods.contains(Mods.Nightcore));
-				st.setBoolean(23, mods.contains(Mods.TouchDevice));
-				st.setBoolean(24, mods.contains(Mods.SpunOut));
-				st.setBoolean(25, mods.contains(Mods.SuddenDeath));
-				st.setBoolean(26, mods.contains(Mods.Perfect));
+				st.setBoolean(15, mods.contains(LegacyMods.Hidden));
+				st.setBoolean(16, mods.contains(LegacyMods.HardRock));
+				st.setBoolean(17, mods.contains(LegacyMods.DoubleTime));
+				st.setBoolean(18, mods.contains(LegacyMods.Flashlight));
+				st.setBoolean(19, mods.contains(LegacyMods.HalfTime));
+				st.setBoolean(20, mods.contains(LegacyMods.Easy));
+				st.setBoolean(21, mods.contains(LegacyMods.NoFail));
+				st.setBoolean(22, mods.contains(LegacyMods.Nightcore));
+				st.setBoolean(23, mods.contains(LegacyMods.TouchDevice));
+				st.setBoolean(24, mods.contains(LegacyMods.SpunOut));
+				st.setBoolean(25, mods.contains(LegacyMods.SuddenDeath));
+				st.setBoolean(26, mods.contains(LegacyMods.Perfect));
 
 				st.addBatch();
 			}

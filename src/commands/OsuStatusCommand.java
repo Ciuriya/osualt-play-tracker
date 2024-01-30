@@ -198,7 +198,7 @@ public class OsuStatusCommand extends Command {
 				String currentScoreText = "";
 				
 				currentScoreText += "\n[" + play.getTitle() + "](https://osu.ppy.sh/beatmaps/" + play.getBeatmapId() + ")";
-				currentScoreText += " " + Mods.getModDisplay(Mods.getModsFromBit(play.getEnabledMods()));
+				currentScoreText += " " + Mods.getModDisplay(Mods.getModsFromJson(play.getMods()));
 				currentScoreText += "\n" + (play.isUploaded() ? ":white_check_mark:" : "<a:loading:894822912408834089>");
 				currentScoreText += " | **<t:" + (play.getDatePlayed().getTime() / 1000) + ":R>**";
 				currentScoreText += " | " + GeneralUtils.toFormattedNumber(play.getScore());
