@@ -27,12 +27,12 @@ import utils.TimeUtils;
 public class OsuStatusCommand extends Command {
 
 	public OsuStatusCommand() {
-		super(null, false, true, CommandCategory.OSU, new String[]{"osustatus", "status"}, 
+		super(null, false, true, CommandCategory.OSU, new String[]{"status", "osustatus"}, 
 			  "Shows tracking status for the registered osu! player.", 
 			  "Shows tracking information for the registered osu! player.",
-			  new String[]{"osustatus", "Shows the tracking info for the osu! player linked to the discord user using this command."},
-			  new String[]{"osustatus <osu! name>", "Shows the tracking info for the given osu! player.\n" +
-													"Example: **`{prefix}osustatus nathan on osu`**"});
+			  new String[]{"status", "Shows the tracking info for the osu! player linked to the discord user using this command."},
+			  new String[]{"status <osu! name>", "Shows the tracking info for the given osu! player.\n" +
+												 "Example: **`{prefix}osustatus nathan on osu`**"});
 	}
 
 	@Override
@@ -189,7 +189,7 @@ public class OsuStatusCommand extends Command {
 		builder.setDescription(descriptionText);
 		
 		String scoresText = "No plays found in the last " + TimeUtils.toDuration(TimeUnit.DAYS.toMillis(Constants.OSU_PLAY_PRUNE_DELAY), false) + "!";
-		List<OsuPlay> latestFetchedScores = user.getCachedLatestPlays(Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
+		List<OsuPlay> latestFetchedScores = user.getCachedLatestPlays(Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT, true);
 		
 		if(!latestFetchedScores.isEmpty()) {
 			scoresText = "";

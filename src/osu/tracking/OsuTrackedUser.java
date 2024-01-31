@@ -114,7 +114,7 @@ public class OsuTrackedUser {
 		return m_isDeleted;
 	}
 	
-	public List<OsuPlay> getCachedLatestPlays(int p_amount) {
+	public List<OsuPlay> getCachedLatestPlays(int p_amount, boolean p_ignoreUninserted) {
 		p_amount = Math.min(p_amount, Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
 		
 		if(p_amount <= m_cachedLatestPlays.size())
@@ -126,7 +126,9 @@ public class OsuTrackedUser {
 			
 			try {
 				PreparedStatement st = conn.prepareStatement(
-									   "SELECT * FROM `osu-play` WHERE `user_id`=? ORDER BY `date_played` DESC LIMIT " + 
+									   "SELECT * FROM `osu-play` WHERE `user_id`=? " +
+									   (p_ignoreUninserted ? "AND `uploaded`=1 AND `upload_status`>=1 " : "") +
+									   "ORDER BY `date_played` DESC LIMIT " + 
 									   Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
 				
 				st.setInt(1, GeneralUtils.stringToInt(m_userId));

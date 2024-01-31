@@ -44,7 +44,7 @@ public class OsuSetProfileCommand extends Command {
 		String userDisplay = username + " (<https://osu.ppy.sh/users/" + fetchedPlayerId + ">)";
 		
 		if(fetchedPlayerId == -1) {
-			DiscordChatUtils.message(p_event.getChannel(), "This username is invalid. Please try again, osu!api likely timed out!");
+			DiscordChatUtils.message(p_event.getChannel(), "This username is invalid, make sure you use your username with spaces!");
 			return;
 		}
 		
@@ -57,7 +57,7 @@ public class OsuSetProfileCommand extends Command {
 		}
 		
 		String databaseErrorMessage = "A database error occured, please try again later!\n" +
-					  				  "If this keeps occuring, make sure to contact Smc#2222 (-Skye on osu!)";
+					  				  "If this keeps occuring, make sure to contact Ciuriya";
 		
 		if(updateSql(p_event, fetchedPlayerId, username.toLowerCase()))
 			DiscordChatUtils.message(p_event.getChannel(), "Your osu! profile was set to " + userDisplay);

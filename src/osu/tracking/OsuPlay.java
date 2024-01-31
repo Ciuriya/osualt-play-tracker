@@ -45,6 +45,7 @@ public class OsuPlay {
 	
 	private boolean m_canUploadRankedStatus;
 	private long m_bestId;
+	private boolean m_passed;
 	
 	public OsuPlay(JSONObject p_jsonPlay) {
 		loadFromJson(p_jsonPlay);
@@ -64,14 +65,16 @@ public class OsuPlay {
 			
 			m_scoreId = p_jsonPlay.optLong("id", 0);
 			m_userId = String.valueOf(p_jsonPlay.optLong("user_id", 0));
-			m_beatmapId = beatmapObject != null ? beatmapObject.optInt("id", 0) : 0;
-			m_score = p_jsonPlay.optLong("score", 0);
-			m_count300 = statisticsObject.optInt("count_300", 0);
-			m_count100 = statisticsObject.optInt("count_100", 0);
-			m_count50 = statisticsObject.optInt("count_50", 0);
-			m_countMiss = statisticsObject.optInt("count_miss", 0);
+			m_beatmapId = p_jsonPlay.optLong("beatmap_id");
+			m_score = p_jsonPlay.optLong("legacy_total_score");
+			if (m_score == 0) m_score = p_jsonPlay.optLong("total_score", 0);
+			m_count300 = statisticsObject.optInt("great", 0);
+			m_count100 = statisticsObject.optInt("ok", 0);
+			m_count50 = statisticsObject.optInt("meh", 0);
+			m_countMiss = statisticsObject.optInt("miss", 0);
 			m_combo = p_jsonPlay.optInt("max_combo", 0);
-			m_perfect = p_jsonPlay.optBoolean("perfect", false);
+			m_perfect = p_jsonPlay.optBoolean("legacy_perfect", false);
+			m_passed = p_jsonPlay.optBoolean("passed", false);
 			
 			JSONArray modArray = p_jsonPlay.optJSONArray("mods");
 			
@@ -79,7 +82,7 @@ public class OsuPlay {
 			else m_mods = modArray.toString();
 			
 			// 2007-01-01T12:34:56+00:00 could be + or -
-			String datePlayedString = p_jsonPlay.optString("created_at", "2007-01-01T00:00:00+00:00").replace("T", " ");
+			String datePlayedString = p_jsonPlay.optString("ended_at", "2007-01-01T00:00:00+00:00").replace("T", " ");
 			
 			if(!datePlayedString.endsWith("Z")) {
 				boolean positiveTimezone = datePlayedString.contains("+");
@@ -94,7 +97,7 @@ public class OsuPlay {
 
 			m_rank = p_jsonPlay.optString("rank", "F");
 			m_pp = p_jsonPlay.optDouble("pp", 0);
-			m_replayAvailable = p_jsonPlay.optBoolean("replay", false);
+			m_replayAvailable = p_jsonPlay.optBoolean("has_replay", false);
 			m_title = beatmapSetObject != null ? (beatmapSetObject.optString("artist", "") + " - " + beatmapSetObject.optString("title", "") + " [" + beatmapObject.optString("version", "") + "]") : "";
 			m_accuracy = p_jsonPlay.optDouble("accuracy", 1);
 			
@@ -359,6 +362,10 @@ public class OsuPlay {
 	
 	public long getBestId() {
 		return m_bestId;
+	}
+	
+	public boolean hasPassed() {
+		return m_passed;
 	}
 	
 	public int getUpdateStatus() {

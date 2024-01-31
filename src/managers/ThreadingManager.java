@@ -72,7 +72,7 @@ public class ThreadingManager {
 				if(future != null && !future.isDone() && !future.isCancelled())
 					future.cancel(p_interruptWhileRunning);
 			}
-		}, p_timeout);
+		}, p_timeout > 0 ? p_timeout : 0);
 	}
 	
 	public <T> Future<T> executeAsync(Callable<T> p_callable, int p_timeout, 
@@ -86,7 +86,7 @@ public class ThreadingManager {
 				if(future != null && !future.isDone() && !future.isCancelled())
 					future.cancel(p_interruptWhileRunning);
 			}
-		}, p_timeout);
+		}, p_timeout > 0 ? p_timeout : 0);
 		
 		return future;
 	}

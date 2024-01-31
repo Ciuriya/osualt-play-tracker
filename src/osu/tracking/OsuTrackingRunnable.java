@@ -38,7 +38,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 			int addedPlaycount = 0;
 
 			if(!array.isEmpty()) {
-				List<OsuPlay> lastCachedPlays = p_user.getCachedLatestPlays(Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT);
+				List<OsuPlay> lastCachedPlays = p_user.getCachedLatestPlays(Constants.OSU_CACHED_LATEST_PLAYS_AMOUNT, false);
 				Timestamp oldestCachedPlayTime = latestPlayDate;
 				
 				if(!lastCachedPlays.isEmpty()) {
@@ -51,7 +51,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 					
 					if(datePlayed != null) {
 						boolean canUploadPlay = false;
-						boolean isPlayUploadable = play.getScoreId() != 0 && play.getBestId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus();
+						boolean isPlayUploadable = play.hasPassed() && play.getScoreId() != 0 && !play.getRank().contentEquals("F") && play.canUploadRankedStatus();
 						
 						if(datePlayed.after(latestPlayDate)) {
 							canUploadPlay = true;

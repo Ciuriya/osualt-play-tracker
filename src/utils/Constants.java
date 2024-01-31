@@ -38,10 +38,10 @@ public class Constants {
 	public static String OSU_API_KEY;
 	
 	// how many osu! api requests can we attempt to send per minute
-	public static final int OSU_API_REQUESTS_PER_MINUTE = 120;
+	public static final int OSU_API_REQUESTS_PER_MINUTE = 60;
 	
 	// how many osu! html scrapes can we attempt per minute
-	public static final int OSU_HTML_REQUESTS_PER_MINUTE = 50;
+	public static final int OSU_HTML_REQUESTS_PER_MINUTE = 10;
 
 	// the fibonacci sequence up to 13
 	public static final int[] FIBONACCI = new int[] { 1, 1, 2, 3, 5, 8, 13 };

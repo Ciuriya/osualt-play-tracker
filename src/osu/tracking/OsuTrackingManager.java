@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Future;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
@@ -181,38 +182,70 @@ public class OsuTrackingManager {
 			newUserIds.removeAll(m_loadedUserIds);
 			
 			try {
-				PreparedStatement osuUserInsertSt = conn.prepareStatement(
-												    "INSERT INTO `osu-user` (`id`, `username`) " +
-												    "VALUES (?, ?) ON DUPLICATE KEY UPDATE `username`=?");
-				PreparedStatement trackUserUpdateSt = conn.prepareStatement(
-													  "INSERT INTO `tracked-osu-user` " +
-													  "(`id`, `mode`, `playcount`, `last-active`, `last-update`, `last-uploaded`) " +
-													  "VALUES (?, 0, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE " +
-													  "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
+				List<Future<Object>> futures = new ArrayList<>();
+				List<Future<Object>> futuresDone = new ArrayList<>();
 				
 				for(int userId : newUserIds) {
 					OsuUserRequest userRequest = new OsuUserRequest(OsuRequestTypes.API, String.valueOf(userId), "0");
-					Object userObject = OsuRequestRegulator.getInstance().sendRequestSync(userRequest, 15000, false);
+					futures.add(OsuRequestRegulator.getInstance().sendRequestAsync(userRequest, 15000, false));
+					
+					while (futures.size() >= Constants.THREAD_POOL_SIZE / 2) {
+						GeneralUtils.sleep(1000);
+						
+						List<Future<Object>> tempFutures = new ArrayList<>();
+						for (Future<Object> runningFuture : futures)
+							if (runningFuture.isCancelled() || runningFuture.isDone())
+								tempFutures.add(runningFuture);
+						
+						futures.removeAll(tempFutures);
+						futuresDone.addAll(tempFutures);
+					}
+				}
+				
+				if (!futures.isEmpty()) {
+					GeneralUtils.sleep(15000);
+					
+					for (Future<Object> runningFuture : futures)
+						if (runningFuture.isCancelled() || runningFuture.isDone())
+							futuresDone.add(runningFuture);
+				}
+				
+				PreparedStatement osuUserInsertSt = conn.prepareStatement(
+													"INSERT INTO `osu-user` (`id`, `username`) " +
+					    							"VALUES (?, ?) ON DUPLICATE KEY UPDATE `username`=?");
+				
+				for(Future<Object> future : futuresDone) {
+					Object userObject = null;
+					
+					try {
+						userObject = future.get();
+					} catch (Exception ex) {}
 					
 					if(OsuUtils.isAnswerValid(userObject, JSONObject.class)) {
 						JSONObject userJson = (JSONObject) userObject;
 						
-						if(userJson.has("username")) {
+						if(userJson.has("username") && userJson.has("id")) {
 							String username = userJson.getString("username");
+							int userId = userJson.getInt("id");
+							
 							osuUserInsertSt.setInt(1, userId);
 							osuUserInsertSt.setString(2, username);
 							osuUserInsertSt.setString(3, username);
 							
 							osuUserInsertSt.addBatch();
 							
-							JSONObject stats = userJson.optJSONObject("statistics");
+							JSONObject stats = userJson.optJSONObject("statistics_rulesets");
 							
 							if(stats != null) {
-								OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, stats.optInt("play_count"));
-								m_loadedUsers.add(user);
-								m_loadedUserIds.add(userId);
+								JSONObject osu = stats.optJSONObject("osu");
 								
-								++successfullyAddedNewUserIds;
+								if (osu != null) {
+									OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, osu.optInt("play_count"));
+									m_loadedUsers.add(user);
+									m_loadedUserIds.add(userId);
+									
+									++successfullyAddedNewUserIds;
+								}
 							}
 							
 							continue;
@@ -222,6 +255,13 @@ public class OsuTrackingManager {
 				
 				osuUserInsertSt.executeBatch();
 				osuUserInsertSt.close();
+				
+
+				PreparedStatement trackUserUpdateSt = conn.prepareStatement(
+													  "INSERT INTO `tracked-osu-user` " +
+													  "(`id`, `mode`, `playcount`, `last-active`, `last-update`, `last-uploaded`) " +
+													  "VALUES (?, 0, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE " +
+													  "`playcount`=?, `last-active`=?, `last-update`=?, `last-uploaded`=?");
 				
 				for(OsuTrackedUser user : m_loadedUsers) {
 					user.addDatabaseEntryToUserUpdatePreparedStatement(trackUserUpdateSt);
