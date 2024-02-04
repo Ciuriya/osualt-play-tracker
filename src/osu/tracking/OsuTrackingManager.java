@@ -234,19 +234,16 @@ public class OsuTrackingManager {
 							
 							osuUserInsertSt.addBatch();
 							
-							JSONObject stats = userJson.optJSONObject("statistics_rulesets");
+							JSONObject stats = userJson.optJSONObject("statistics");
 							
 							if(stats != null) {
-								JSONObject osu = stats.optJSONObject("osu");
+								OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, stats.optInt("play_count"));
+								m_loadedUsers.add(user);
+								m_loadedUserIds.add(userId);
 								
-								if (osu != null) {
-									OsuTrackedUser user = new OsuTrackedUser(String.valueOf(userId), 0, osu.optInt("play_count"));
-									m_loadedUsers.add(user);
-									m_loadedUserIds.add(userId);
-									
-									++successfullyAddedNewUserIds;
-								}
+								++successfullyAddedNewUserIds;
 							}
+							
 							
 							continue;
 						}
@@ -279,9 +276,10 @@ public class OsuTrackingManager {
 		
 			if(!p_removedUsers.isEmpty()) removeRegisteredUsers(p_removedUsers);
 
-			Log.log(Level.INFO, "Updated registered users: " + p_users.size() + " registered users, " + 
+			Log.log(Level.INFO, "Updated registered users: " + m_loadedUsers.size() + " registered users, " + 
 															   successfullyAddedNewUserIds + " added, " + 
-															   p_removedUsers.size() + " removed");
+															   p_removedUsers.size() + " removed, " +
+															   (p_users.size() - m_loadedUsers.size()) + " ignored/banned");
 		}
 	}
 	

@@ -170,9 +170,9 @@ public class OsuRequestRegulator {
 	public Future<Object> sendRequestAsync(OsuRequest p_request, int p_timeout, boolean p_priority) {
 		return ThreadingManager.getInstance().executeAsync(new Callable<Object>() {
 			public Object call() {
-				return sendRequestSync(p_request, p_timeout, p_priority);
+				return sendRequestSync(p_request, p_timeout - 500, p_priority);
 			}
-		}, p_timeout, true);
+		}, p_timeout, false);
 	}
 	
 	private void sendRequest(OsuRequest p_request, int p_timeout, boolean p_priority) {
