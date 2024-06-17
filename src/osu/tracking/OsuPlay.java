@@ -18,6 +18,7 @@ import data.Log;
 import managers.DatabaseManager;
 import utils.Constants;
 import utils.GeneralUtils;
+import utils.OsuUtils;
 import utils.TimeUtils;
 
 public class OsuPlay {
@@ -66,12 +67,22 @@ public class OsuPlay {
 			m_scoreId = p_jsonPlay.optLong("id", 0);
 			m_userId = String.valueOf(p_jsonPlay.optLong("user_id", 0));
 			m_beatmapId = p_jsonPlay.optLong("beatmap_id");
-			m_score = p_jsonPlay.optLong("legacy_total_score");
-			if (m_score == 0) m_score = p_jsonPlay.optLong("total_score", 0);
 			m_count300 = statisticsObject.optInt("great", 0);
 			m_count100 = statisticsObject.optInt("ok", 0);
 			m_count50 = statisticsObject.optInt("meh", 0);
 			m_countMiss = statisticsObject.optInt("miss", 0);
+
+			m_score = p_jsonPlay.optLong("legacy_total_score");
+			
+			if (m_score == 0) {
+				m_score = p_jsonPlay.optLong("total_score", 0);
+				
+				if (m_score == 0) {
+					int objectCount = m_count300 + m_count100 + m_count50 + m_countMiss;
+					m_score = OsuUtils.convertStandardisedToClassic(m_score, objectCount);
+				}
+			}
+			
 			m_combo = p_jsonPlay.optInt("max_combo", 0);
 			m_perfect = p_jsonPlay.optBoolean("legacy_perfect", false);
 			m_passed = p_jsonPlay.optBoolean("passed", false);

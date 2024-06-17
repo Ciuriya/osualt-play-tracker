@@ -144,4 +144,8 @@ public class OsuUtils {
 		
 		return playerId;
 	}
+	
+	public static long convertStandardisedToClassic(long p_score, int p_objectCount) {
+	    return Math.round((Math.pow(p_objectCount, 2) * 32.57 + 100000) * p_score / 1000000);
+	}
 }
