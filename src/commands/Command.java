@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 import data.BotAdmins;
 import data.CommandCategory;
 import data.Log;
+import help.HelpBlurb;
 import managers.ThreadingManager;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Member;
@@ -173,5 +174,7 @@ public abstract class Command {
 		new OsuStatsCommand();
 		new StatsCommand();
 		new StopCommand();
+		
+		HelpBlurb.registerBlurbs();
 	}
 }

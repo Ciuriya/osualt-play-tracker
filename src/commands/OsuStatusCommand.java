@@ -146,7 +146,7 @@ public class OsuStatusCommand extends Command {
 															")" : " and <" + TimeUtils.toDuration(cutoff, false) + ")");
 		}
 
-		builder.setAuthor(p_username + " • " + cycleText, 
+		builder.setAuthor(p_username + " â€¢ " + cycleText, 
 						  "https://osu.ppy.sh/users/" + user.getUserId(),
 						  "https://a.ppy.sh/" + user.getUserId());
 		
@@ -220,7 +220,7 @@ public class OsuStatusCommand extends Command {
 			scoresText = scoresText.substring(1);
 		}
 		
-		String selfUpdateMessage = " • Message will self-update after next refresh";
+		String selfUpdateMessage = " â€¢ Message will self-update after next refresh";
 		builder.addField("Latest fetched scores" + (p_willRefresh ? selfUpdateMessage : ""), scoresText, false);
 		
 		return builder.build();
