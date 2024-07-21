@@ -16,7 +16,7 @@ public class OsuScoresRequest extends OsuRequest {
 	}
 
 	@Override
-	public void send(boolean p_api) throws Exception {
+	public void send(int p_apiIndex) throws Exception {
 		String[] args = getArguments();
 
 		if(args.length < 1) {
@@ -36,7 +36,7 @@ public class OsuScoresRequest extends OsuRequest {
 		requestArgsString += "|limit=" + limit;
 		requestArgsString += "|offset=" + offset;
 		
-		String post = OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/scores/" + scoreType, requestArgsString.split("\\|"));
+		String post = OsuApiManager.getInstance().sendApiRequest(p_apiIndex, "users/" + userId + "/scores/" + scoreType, requestArgsString.split("\\|"));
 		
 		if(!checkForEmptyPost(post, userId)) {
 			setAnswer(new JSONArray(post));

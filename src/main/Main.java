@@ -76,11 +76,7 @@ public class Main {
 		
 		Log.log(Level.INFO, "Setting up osu!");
 		
-		Constants.OSU_API_KEY = loginInfo.getString("osuApiKey");
-		
-		try {
-			OsuApiManager.getInstance().authenticate(loginInfo.getString("osuApiV2ClientSecret"));
-		} catch (Exception e) {}
+		OsuApiManager.getInstance().authenticateAllClients(loginInfo);
 		
 		OsuRequestRegulator.getInstance();
 		OsuTrackingManager.getInstance();

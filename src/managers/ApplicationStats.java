@@ -1,5 +1,9 @@
 package managers;
 
+import java.util.LinkedList;
+
+import utils.Constants;
+
 public class ApplicationStats {
 
 	private static ApplicationStats instance;
@@ -7,11 +11,11 @@ public class ApplicationStats {
 	private long m_startupTime;
 	private long m_timerStart;
 	
-	private boolean m_osuApiStalled;
-	private int m_osuApiFailedAttempts;
-	private double m_osuApiLoad;
-	private int m_osuApiRequestsSent;
-	private int m_osuApiRequestsFailed;
+	private LinkedList<Boolean> m_osuApisStalled;
+	private LinkedList<Integer> m_osuApisFailedAttempts;
+	private LinkedList<Double> m_osuApisLoads;
+	private LinkedList<Integer> m_osuApisRequestsSent;
+	private LinkedList<Integer> m_osuApisRequestsFailed;
 	
 	private boolean m_osuHtmlStalled;
 	private int m_osuHtmlFailedAttempts;
@@ -29,6 +33,27 @@ public class ApplicationStats {
 	
 	public ApplicationStats() {
 		m_bootTimestamp = System.currentTimeMillis();
+		m_osuApisStalled = new LinkedList<Boolean>();
+		m_osuApisFailedAttempts = new LinkedList<Integer>();
+		m_osuApisLoads = new LinkedList<Double>();
+		m_osuApisRequestsSent = new LinkedList<Integer>();
+		m_osuApisRequestsFailed = new LinkedList<Integer>();
+	}
+	
+	public void loadOsuApiLists() {
+		m_osuApisStalled.clear();
+		m_osuApisFailedAttempts.clear();
+		m_osuApisLoads.clear();
+		m_osuApisRequestsSent.clear();
+		m_osuApisRequestsFailed.clear();
+		
+		for (int i = 0; i < Constants.OSU_API_CLIENTS_AUTHENTICATED; ++i) {
+			m_osuApisStalled.add(false);
+			m_osuApisFailedAttempts.add(0);
+			m_osuApisLoads.add(0d);
+			m_osuApisRequestsSent.add(0);
+			m_osuApisRequestsFailed.add(0);
+		}
 	}
 	
 	public long getStartupTime() {
@@ -43,44 +68,82 @@ public class ApplicationStats {
 		return System.currentTimeMillis() - m_bootTimestamp;
 	}
 	
-	public boolean isOsuApiStalled() {
-		return m_osuApiStalled;
+	public boolean isOsuApiStalled(int index) {
+		return m_osuApisStalled.get(index);
 	}
 	
-	public int getOsuApiFailedAttempts() {
-		return m_osuApiFailedAttempts;
+	public int getOsuApiStallQuantity() {
+		int stalled = 0;
+		
+		for (int i = 0; i < m_osuApisStalled.size(); ++i)
+			if (m_osuApisStalled.get(i))
+				stalled++;
+		
+		return stalled;
 	}
 	
-	public double getOsuApiLoad() {
-		return m_osuApiLoad;
+	public boolean areAllOsuApisStalled() {
+		return getOsuApiStallQuantity() == m_osuApisStalled.size();
 	}
 	
-	public int getOsuApiRequestsSent() {
-		return m_osuApiRequestsSent;
+	public int getOsuApiFailedAttempts(int index) {
+		return m_osuApisFailedAttempts.get(index);
 	}
 	
-	public int getOsuApiRequestsFailed() {
-		return m_osuApiRequestsFailed;
+	public double getOsuApiLoad(int index) {
+		return m_osuApisLoads.get(index);
 	}
 	
-	public void setOsuApiStalled(boolean p_apiStalled) {
-		m_osuApiStalled = p_apiStalled;
+	public double getCombinedOsuApiLoad() {
+		double load = 0.0d;
+		for (int i = 0; i < m_osuApisLoads.size(); ++i)
+			load += getOsuApiLoad(i);
+		
+		return load;
 	}
 	
-	public void setOsuApiFailedAttempts(int p_failedAttempts) {
-		m_osuApiFailedAttempts = p_failedAttempts;
+	public int getOsuApiRequestsSent(int index) {
+		return m_osuApisRequestsSent.get(index);
+	}	
+	
+	public int getCombinedOsuApiRequestsSent() {
+		int sent = 0;
+		for (int i = 0; i < m_osuApisRequestsSent.size(); ++i)
+			sent += getOsuApiRequestsSent(i);
+		
+		return sent;
 	}
 	
-	public void setOsuApiLoad(double p_apiLoad) {
-		m_osuApiLoad = p_apiLoad;
+	public int getOsuApiRequestsFailed(int index) {
+		return m_osuApisRequestsFailed.get(index);
 	}
 	
-	public void addOsuApiRequestSent() {
-		m_osuApiRequestsSent++;
+	public int getCombinedOsuApiRequestsFailed() {
+		int failed = 0;
+		for (int i = 0; i < m_osuApisRequestsFailed.size(); ++i)
+			failed += getOsuApiRequestsFailed(i);
+		
+		return failed;
 	}
 	
-	public void addOsuApiRequestFailed() {
-		m_osuApiRequestsFailed++;
+	public void setOsuApiStalled(int index, boolean p_apiStalled) {
+		m_osuApisStalled.set(index, p_apiStalled);
+	}
+	
+	public void setOsuApiFailedAttempts(int index, int p_failedAttempts) {
+		m_osuApisFailedAttempts.set(index, p_failedAttempts);
+	}
+	
+	public void setOsuApiLoad(int index, double p_apiLoad) {
+		m_osuApisLoads.set(index, p_apiLoad);
+	}
+	
+	public void addOsuApiRequestSent(int index) {
+		m_osuApisRequestsSent.set(index, getOsuApiRequestsSent(index) + 1);
+	}
+	
+	public void addOsuApiRequestFailed(int index) {
+		m_osuApisRequestsFailed.set(index, getOsuApiRequestsFailed(index) + 1);
 	}
 	
 	public boolean isOsuHtmlStalled() {

@@ -168,6 +168,7 @@ public abstract class Command {
 	public static void registerCommands() {
 		new HelpCommand();
 		new OsuApiOutputCommand();
+		new OsuConvertOAuthCodeToRefreshTokenCommand();
 		new OsuSetProfileCommand();
 		new OsuStatusCommand();
 		new OsuTrackCommand();

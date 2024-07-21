@@ -7,6 +7,7 @@ public abstract class OsuRequest {
 	private String m_name;
 	private OsuRequestTypes m_type;
 	private long m_sentTime;
+	private int m_handlerIndex;
 	private int m_timeout;
 	private String[] m_arguments;
 	private Object m_answer;
@@ -29,6 +30,10 @@ public abstract class OsuRequest {
 		return m_sentTime;
 	}
 	
+	public int getHandlerIndex() {
+		return m_handlerIndex;
+	}
+	
 	public int getTimeout() {
 		return m_timeout;
 	}
@@ -49,6 +54,10 @@ public abstract class OsuRequest {
 		m_sentTime = System.currentTimeMillis();
 	}
 	
+	public void setHandlerIndex(int p_handlerIndex) {
+		m_handlerIndex = p_handlerIndex;
+	}
+	
 	public void setTimeout(int p_timeout) {
 		m_timeout = p_timeout;
 	}
@@ -57,7 +66,7 @@ public abstract class OsuRequest {
 		m_answer = p_answer;
 	}
 
-	public abstract void send(boolean p_api) throws Exception;
+	public abstract void send(int p_apiIndex) throws Exception;
 	
 	protected boolean checkForEmptyPost(String post, String userId) {
 		if(post.isBlank() || !post.contains("{")) {

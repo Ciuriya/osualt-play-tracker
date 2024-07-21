@@ -37,15 +37,14 @@ public class StatsCommand extends Command {
 		if(showFullStats) {
 			builder.addField("Startup Time", TimeUtils.toDuration(stats.getStartupTime(), true), true);
 			
-			builder.addField("osu! api/html status", (stats.isOsuApiStalled() ? "Paused" : "Running") +
-													 " / " +
-													 (stats.isOsuHtmlStalled() ? "Paused" : "Running"), true);
-			builder.addField("osu! api/html sent last minute", GeneralUtils.toFormattedNumber(Constants.OSU_API_REQUESTS_PER_MINUTE * 
-																							  stats.getOsuApiLoad()) + " / " + 
+			int stalled = stats.getOsuApiStallQuantity();
+			builder.addField("osu! api status", ((Constants.OSU_API_CLIENTS_AUTHENTICATED - stalled) + " Running " + stalled + " Paused"), true);
+			builder.addField("osu! api/html sent last minute", GeneralUtils.toFormattedNumber(Constants.OSU_API_REQUESTS_PER_MINUTE_PER_KEY * 
+																							  stats.getCombinedOsuApiLoad()) + " / " + 
 															   GeneralUtils.toFormattedNumber(Constants.OSU_HTML_REQUESTS_PER_MINUTE * 
 																	   						  stats.getOsuHtmlLoad()), true);
 			builder.addField("o!api requests sent/failed", 
-							 stats.getOsuApiRequestsSent() + " / " + stats.getOsuApiRequestsFailed(), true);
+							 stats.getCombinedOsuApiRequestsSent() + " / " + stats.getCombinedOsuApiRequestsFailed(), true);
 			builder.addField("o!html requests sent/failed", 
 							 stats.getOsuHtmlRequestsSent() + " / " + stats.getOsuHtmlRequestsFailed(), true);
 		}

@@ -20,8 +20,7 @@ public class OsuRequestRegulator {
 	private LinkedList<OsuRequest> m_apiRequests;
 	private LinkedList<OsuRequest> m_htmlRequests;
 	
-	private int lastRefreshApiRequestsCount = 0;
-	private int lastRefreshHtmlRequestsCount = 0;
+	private LinkedList<Integer> m_lastRefreshRequestsCount;
 	private long lastLoadRefresh = 0;
 	
 	public static OsuRequestRegulator getInstance() {
@@ -33,111 +32,124 @@ public class OsuRequestRegulator {
 	public OsuRequestRegulator() {
 		lastLoadRefresh = System.currentTimeMillis();
 		
+		m_lastRefreshRequestsCount = new LinkedList<>();
 		m_apiRequests = new LinkedList<>();
 		m_htmlRequests = new LinkedList<>();
 		
-		startRequestTimer(true);
-		startRequestTimer(false);
-		
+		startRequestDistributionTimer();
 		startLoadTimer();
 	}
-	
-	// this is for both api and html, so p_isApi is just to distinguish
-	// and use the proper linked list
-	// they're separate so they can have their own timer on their own speed
-	// based on the amount of requests they can do using their request type
-	private void startRequestTimer(boolean p_isApi) {
+
+	private void startRequestDistributionTimer() {
 		final ApplicationStats stats = ApplicationStats.getInstance();
 		final ThreadingManager threadManager = ThreadingManager.getInstance();
-		long delay = (long) (60000.0 / (double) (p_isApi ? Constants.OSU_API_REQUESTS_PER_MINUTE :
-														   Constants.OSU_HTML_REQUESTS_PER_MINUTE));
 		
-		setStalled(p_isApi, false);
+		stats.loadOsuApiLists();
 		
-		new Timer().scheduleAtFixedRate(new TimerTask() {
-			public void run() {
-				// if we have a request that can't send, stall the timer until it works out
-				if((p_isApi && stats.isOsuApiStalled()) || (!p_isApi && stats.isOsuHtmlStalled())) return;
-				
-				OsuRequest toProcess = null;
-				
-				try {
-					toProcess = p_isApi ? m_apiRequests.getFirst() : m_htmlRequests.getFirst();
+		for (int i = -1; i < Constants.OSU_API_CLIENTS_AUTHENTICATED; ++i) {
+			long delay = (long) (60000.0 / (double) (i == -1 ? Constants.OSU_HTML_REQUESTS_PER_MINUTE :
+															   Constants.OSU_API_REQUESTS_PER_MINUTE_PER_KEY));
+			final int j = i;
+			m_lastRefreshRequestsCount.add(0);
+			
+			new Timer().scheduleAtFixedRate(new TimerTask() {
+				public void run() {
+					// if we have a request that can't send, stall the timer until it works out
+					if (j == -1 && stats.isOsuHtmlStalled()) return;
+					else if (j >= 0 && stats.isOsuApiStalled(j)) return;
+					
+					OsuRequest toProcess = null;
+					
+					try {
+						toProcess = j == -1 ? m_htmlRequests.getFirst() : m_apiRequests.getFirst();
+						
+						if(toProcess != null) {
+							if(j >= 0) m_apiRequests.remove(toProcess);
+							else m_htmlRequests.remove(toProcess);
+						}
+					} catch(NoSuchElementException e) { }
 					
 					if(toProcess != null) {
-						if(p_isApi) m_apiRequests.remove(toProcess);
-						else m_htmlRequests.remove(toProcess);
-					}
-				} catch(NoSuchElementException e) { }
-				
-				if(toProcess != null) {
-					final OsuRequest request = toProcess;
-					
-					threadManager.executeAsync(new Runnable() {
-						public void run() {
-							int currentRequestAttempts = 0;
-							int attempts = getFailedAttempts(p_isApi);
-							
-							if(attempts > 0) setStalled(p_isApi, true);
-							
-							while(currentRequestAttempts < Constants.OSU_REQUEST_FAILS_ALLOWED) {
-								try {
-									if(p_isApi) stats.addOsuApiRequestSent();
-									else stats.addOsuHtmlRequestSent();
-									
-									request.send(p_isApi);
-									
-									if(request.getAnswer() instanceof String && ((String) request.getAnswer()).contentEquals("failed"))
-										throw new Exception("Request returned " + ((String) request.getAnswer()));
-									
-									if(attempts > 0) setFailedAttempts(p_isApi, 0);
-									
-									break;
-								} catch(Exception e) {
-									setStalled(p_isApi, true);
-									
-									int nextAttemptDelay = Constants.FIBONACCI[Math.min(Constants.FIBONACCI.length - 1, attempts)] * 1000;
-									Log.log(Level.WARNING, "Retrying o!" + (p_isApi ? "api" : "html") + " request in " + nextAttemptDelay + "s\n" +
-														   "Request: " + request.getName() + " Ex: " + e.getMessage());
-									
-									GeneralUtils.sleep(nextAttemptDelay);
-								}
-								
-								addFailedAttempt(p_isApi);
-								++attempts;
-								++currentRequestAttempts;
+						final OsuRequest request = toProcess;
+						request.setHandlerIndex(j);
+						
+						threadManager.executeAsync(new Runnable() {
+							public void run() {
+								processOsuRequest(request, j);
 							}
-							
-							setStalled(p_isApi, false);
-						}
-					}, (int) (request.getTimeout() - (System.currentTimeMillis() - request.getTimeSent())), true);
+						}, (int) (request.getTimeout() - (System.currentTimeMillis() - request.getTimeSent())), true);
+					}
 				}
-			}
-		}, delay, delay);
+			}, delay, delay);
+		}
+		
 	}
 	
-	private void setStalled(boolean p_isApi, boolean p_stalled) {
+	// p_apiIndex is -1 for html, 0-indexed for each api key being used
+	private void processOsuRequest(final OsuRequest p_request, int p_apiIndex) {
+		int currentRequestAttempts = 0;
+		int attempts = getFailedAttempts(p_apiIndex);
+		
+		if (attempts > 0) setStalled(p_apiIndex, true);
+		
+		while(currentRequestAttempts < Constants.OSU_REQUEST_FAILS_ALLOWED) {
+			try {
+				addRequestSent(p_apiIndex);
+				p_request.send(p_apiIndex);
+				
+				if(p_request.getAnswer() instanceof String && ((String) p_request.getAnswer()).contentEquals("failed"))
+					throw new Exception("Request returned " + ((String) p_request.getAnswer()));
+				
+				if(attempts > 0) setFailedAttempts(p_apiIndex, 0);
+				
+				break;
+			} catch(Exception e) {
+				setStalled(p_apiIndex, true);
+				
+				int nextAttemptDelay = Constants.FIBONACCI[Math.min(Constants.FIBONACCI.length - 1, attempts)] * 1000;
+				Log.log(Level.WARNING, "Retrying o!" + (p_apiIndex >= 0 ? "api (" + p_apiIndex + ")" : "html") + " request in " + nextAttemptDelay + "s\n" +
+									   "Request: " + p_request.getName() + " Ex: " + e.getMessage());
+				
+				GeneralUtils.sleep(nextAttemptDelay);
+			}
+			
+			addFailedAttempt(p_apiIndex);
+			++attempts;
+			++currentRequestAttempts;
+		}
+		
+		setStalled(p_apiIndex, false);
+	}
+	
+	private void setStalled(int p_apiIndex, boolean p_stalled) {
 		ApplicationStats stats = ApplicationStats.getInstance();
 		
-		if(p_isApi) stats.setOsuApiStalled(p_stalled);
+		if(p_apiIndex >= 0) stats.setOsuApiStalled(p_apiIndex, p_stalled);
 		else stats.setOsuHtmlStalled(p_stalled);
 	}
 	
-	private void addFailedAttempt(boolean p_isApi) {
-		setFailedAttempts(p_isApi, getFailedAttempts(p_isApi) + 1);
-	}
-	
-	private void setFailedAttempts(boolean p_isApi, int amount) {
+	private void addRequestSent(int p_apiIndex) {
 		ApplicationStats stats = ApplicationStats.getInstance();
 		
-		if(p_isApi) stats.setOsuApiFailedAttempts(amount);
+		if(p_apiIndex >= 0) stats.addOsuApiRequestSent(p_apiIndex);
+		else stats.addOsuHtmlRequestSent();
+	}
+	
+	private int getFailedAttempts(int p_apiIndex) {
+		ApplicationStats stats = ApplicationStats.getInstance();
+		
+		return p_apiIndex >= 0 ? stats.getOsuApiFailedAttempts(p_apiIndex) : stats.getOsuHtmlFailedAttempts();
+	}
+	
+	private void addFailedAttempt(int p_apiIndex) {
+		setFailedAttempts(p_apiIndex, getFailedAttempts(p_apiIndex) + 1);
+	}
+	
+	private void setFailedAttempts(int p_apiIndex, int amount) {
+		ApplicationStats stats = ApplicationStats.getInstance();
+		
+		if(p_apiIndex >= 0) stats.setOsuApiFailedAttempts(p_apiIndex, amount);
 		else stats.setOsuHtmlFailedAttempts(amount);
-	}
-	
-	private int getFailedAttempts(boolean p_isApi) {
-		ApplicationStats stats = ApplicationStats.getInstance();
-		
-		return p_isApi ? stats.getOsuApiFailedAttempts() : stats.getOsuHtmlFailedAttempts();
 	}
 	
 	public Object sendRequestSync(OsuRequest p_request, int p_timeout, boolean p_priority) {
@@ -151,7 +163,7 @@ public class OsuRequestRegulator {
 			if(timeElapsed >= p_request.getTimeout()) {
 				if(p_request.getType() == OsuRequestTypes.API) {
 					m_apiRequests.remove(p_request);
-					stats.addOsuApiRequestFailed();
+					stats.addOsuApiRequestFailed(p_request.getHandlerIndex());
 				} else {
 					m_htmlRequests.remove(p_request);
 					stats.addOsuHtmlRequestFailed();
@@ -184,9 +196,8 @@ public class OsuRequestRegulator {
 		if(p_request.getType() == OsuRequestTypes.BOTH) {
 			OsuRequestTypes type = OsuRequestTypes.API;
 			
-			// if we're stalled anywhere, use the other
-			if(stats.isOsuApiStalled() && !stats.isOsuHtmlStalled()) type = OsuRequestTypes.HTML;
-			else if(stats.getOsuApiLoad() > stats.getOsuHtmlLoad()) type = OsuRequestTypes.HTML;
+			// if we're stalled, use the other
+			if(stats.areAllOsuApisStalled() && !stats.isOsuHtmlStalled()) type = OsuRequestTypes.HTML;
 			
 			p_request.setType(type);
 		}
@@ -218,17 +229,22 @@ public class OsuRequestRegulator {
 		ApplicationStats stats = ApplicationStats.getInstance(); 
 		long delay = System.currentTimeMillis() - lastLoadRefresh;
 		
-		if(delay >= 60000) {
-			lastLoadRefresh = System.currentTimeMillis();
-			lastRefreshApiRequestsCount = stats.getOsuApiRequestsSent();
-			lastRefreshHtmlRequestsCount = stats.getOsuHtmlRequestsSent();
-		} else {
-			int apiRequests = stats.getOsuApiRequestsSent() - lastRefreshApiRequestsCount;
-			int htmlRequests = stats.getOsuHtmlRequestsSent() - lastRefreshHtmlRequestsCount;
-			double timeSliceMult = 60000.0 / (double) delay;
+		// 0 = html, rest are api clients
+		for(int i = 0; i < Constants.OSU_API_CLIENTS_AUTHENTICATED + 1; ++i) {
+			int requestsSent = i == 0 ? stats.getOsuHtmlRequestsSent() : stats.getOsuApiRequestsSent(i - 1);
 			
-			stats.setOsuApiLoad(((double) apiRequests * timeSliceMult) / (double) Constants.OSU_API_REQUESTS_PER_MINUTE);
-			stats.setOsuHtmlLoad(((double) htmlRequests * timeSliceMult) / (double) Constants.OSU_HTML_REQUESTS_PER_MINUTE);
+			if(delay >= 60000) {
+				lastLoadRefresh = System.currentTimeMillis();
+				
+				m_lastRefreshRequestsCount.set(i, requestsSent);
+			} else {
+				int requests = requestsSent - m_lastRefreshRequestsCount.get(i);
+				double timeSliceMult = 60000.0 / (double) delay;
+				
+				if (i == 0)
+					stats.setOsuHtmlLoad(((double) requests * timeSliceMult) / (double) Constants.OSU_HTML_REQUESTS_PER_MINUTE);
+				else stats.setOsuApiLoad(i - 1, ((double) requests * timeSliceMult) / (double) Constants.OSU_API_REQUESTS_PER_MINUTE_PER_KEY);
+			}
 		}
 	}
 }

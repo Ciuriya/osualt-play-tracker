@@ -35,10 +35,11 @@ public class Constants {
 	// the time between activity switches on discord, in seconds
 	public static final int ACTIVITY_ROTATION_INTERVAL = 600;
 	
-	public static String OSU_API_KEY;
+	// this isn't a final int since it adds up as they get authenticated
+	public static int OSU_API_CLIENTS_AUTHENTICATED = 0;
 	
-	// how many osu! api requests can we attempt to send per minute
-	public static final int OSU_API_REQUESTS_PER_MINUTE = 120;
+	// how many osu! api requests can we attempt to send per minute per api key
+	public static final int OSU_API_REQUESTS_PER_MINUTE_PER_KEY = 60;
 	
 	// how many osu! html scrapes can we attempt per minute
 	public static final int OSU_HTML_REQUESTS_PER_MINUTE = 10;

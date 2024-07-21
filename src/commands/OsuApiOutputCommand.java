@@ -66,7 +66,7 @@ public class OsuApiOutputCommand extends Command {
 	
 	private String onUserCall(MessageReceivedEvent p_event, String[] p_args) throws Exception {
 		String userId = URLEncoder.encode(p_args[1], StandardCharsets.UTF_8).replaceAll("\\+", "%20");
-		return OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/osu", new String("key=id").split("\\|"));
+		return OsuApiManager.getInstance().sendApiRequest(0, "users/" + userId + "/osu", new String("key=id").split("\\|"));
 	}
 	
 	private String onUsersCall(MessageReceivedEvent p_event, String[] p_args) throws Exception {
@@ -75,7 +75,7 @@ public class OsuApiOutputCommand extends Command {
 		for(String userId : p_args)
 			userIdList.add("ids[]=" + userId);
 		
-		return OsuApiManager.getInstance().sendApiRequest("users", userIdList.toArray(new String[]{}));
+		return OsuApiManager.getInstance().sendApiRequest(0, "users", userIdList.toArray(new String[]{}));
 	}
 	
 	private String onScoresCall(MessageReceivedEvent p_event, String[] p_args) throws Exception {
@@ -100,6 +100,6 @@ public class OsuApiOutputCommand extends Command {
 		requestArgsString += "|limit=" + limit;
 		requestArgsString += "|offset=" + offset;
 		
-		return OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/scores/" + scoreType, requestArgsString.split("\\|"));
+		return OsuApiManager.getInstance().sendApiRequest(0, "users/" + userId + "/scores/" + scoreType, requestArgsString.split("\\|"));
 	}
 }

@@ -16,7 +16,7 @@ public class OsuUsersRequest extends OsuRequest {
 	}
 
 	@Override
-	public void send(boolean p_api) throws Exception {
+	public void send(int p_apiIndex) throws Exception {
 		String[] args = getArguments();
 
 		if(args.length < 1 || args.length > 50) {
@@ -24,16 +24,16 @@ public class OsuUsersRequest extends OsuRequest {
 			return;
 		}
 
-		sendApi(args);
+		sendApi(p_apiIndex, args);
 	}
 
-	private void sendApi(String[] p_args) throws Exception {
+	private void sendApi(int p_apiIndex, String[] p_args) throws Exception {
 		List<String> userIdList = new ArrayList<>();
 		
 		for(String userId : p_args)
 			userIdList.add("ids[]=" + userId);
 		
-		String post = OsuApiManager.getInstance().sendApiRequest("users", userIdList.toArray(new String[]{}));
+		String post = OsuApiManager.getInstance().sendApiRequest(p_apiIndex, "users", userIdList.toArray(new String[]{}));
 		
 		setAnswer(new JSONObject(post));
 	}

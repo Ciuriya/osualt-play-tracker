@@ -1,24 +1,33 @@
 package osu.api;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
-import java.util.logging.Level;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
-import data.Log;
 import utils.Constants;
+import utils.FileUtils;
 
 public class OsuApiManager {
 
 	private static OsuApiManager instance;
 	
-	private String m_accessToken = "";
+	// if you need people to give access tokens, give them this link and ask for the code given in the url
+	// then add it to the list in login.txt
+	// https://osu.ppy.sh/oauth/authorize?client_id=10018&response_type=code&scope=public
+	private LinkedList<String> m_accessTokens;
+	private LinkedList<String> m_refreshTokens;
+	private JSONObject m_loginInfo;
+	
+	private String m_clientSecret;
 	
 	public static OsuApiManager getInstance() {
 		if(instance == null) instance = new OsuApiManager();
@@ -26,9 +35,51 @@ public class OsuApiManager {
 		return instance;
 	}
 	
-	public OsuApiManager() {}
+	public OsuApiManager() {
+		m_accessTokens = new LinkedList<>();
+		m_refreshTokens = new LinkedList<>();
+	}
 	
-	public String sendApiRequest(String p_requestUrl, String[] p_args) throws Exception {
+	public void authenticateAllClients(JSONObject p_loginInfo) {
+		m_loginInfo = p_loginInfo;
+		loadRefreshTokensFromLoginInfo();
+		
+		m_clientSecret = m_loginInfo.getString("osuApiV2ClientSecret");
+		
+		for (String refreshToken : m_refreshTokens) {
+			try {
+				authenticate(refreshToken, -1);
+			} catch (Exception e) {}
+		}			
+		
+		try {
+			authenticate("", -1);
+		} catch (Exception e) {}
+		
+		Constants.OSU_API_CLIENTS_AUTHENTICATED = m_accessTokens.size();
+	}
+	
+	private void loadRefreshTokensFromLoginInfo() {
+		m_refreshTokens.clear();
+		
+		JSONArray refreshTokenArray = m_loginInfo.getJSONArray("osuApiRefreshTokens");
+		
+		for (int i = 0; i < refreshTokenArray.length(); ++i) {
+			String refreshToken = refreshTokenArray.optString(i);
+			
+			if (refreshToken.length() > 0)
+				m_refreshTokens.add(refreshToken);
+		}
+	}
+	
+	private void updateRefreshTokensInLoginInfo() {
+		if (m_loginInfo != null) {
+			m_loginInfo.put("osuApiRefreshTokens", m_refreshTokens);
+			FileUtils.writeToFile(new File("login.txt"), m_loginInfo.toString(), false);
+		}
+	}
+	
+	public String sendApiRequest(int p_apiIndex, String p_requestUrl, String[] p_args) throws Exception {
 		String url = Constants.OSU_API_ENDPOINT_URL + "v2/" + p_requestUrl;
 		
 		for(int i = 0; i < p_args.length; ++i) {
@@ -38,42 +89,70 @@ public class OsuApiManager {
 			url += p_args[i];
 		}
 		
-		return sendApiPost("GET", url, "");
+		return sendApiPost(p_apiIndex, "GET", url, "");
 	}
 	
-	public void authenticate(String p_clientSecret) throws Exception {
+	public void authenticate(String p_refreshToken, int p_apiIndex) throws Exception {
+		int apiIndex = p_apiIndex == -1 ? m_accessTokens.size() : p_apiIndex;
 		JSONObject bodyJson = new JSONObject();
 		
 		bodyJson.put("client_id", 10018);
-		bodyJson.put("client_secret", p_clientSecret);
-		bodyJson.put("grant_type", "client_credentials");
+		bodyJson.put("client_secret", m_clientSecret);
+		bodyJson.put("grant_type", p_refreshToken.isEmpty() ? "client_credentials" : "refresh_token");
 		bodyJson.put("scope", "public");
 		
+		if(!p_refreshToken.isEmpty()) bodyJson.put("refresh_token", p_refreshToken);
+		
 		String body = bodyJson.toString();
-		String response = sendApiPost("POST", "https://osu.ppy.sh/oauth/token", body);
+		String response = sendApiPost(apiIndex, "POST", "https://osu.ppy.sh/oauth/token", body);
 		
 		if(!response.isEmpty()) {
 			JSONObject apiResponse = new JSONObject(response);
 		
-			m_accessToken = apiResponse.optString("access_token", "");
+			String accessToken = apiResponse.optString("access_token", "");
+			String refreshToken = apiResponse.optString("refresh_token", "");
 			long expiryDelay = apiResponse.optLong("expires_in", 86400);
 			long refreshDelay = expiryDelay * 1000;
 			
-			new Timer().schedule(new TimerTask() {
-				public void run() {
-					try {
-						authenticate(p_clientSecret);
-					} catch (Exception e) {}
+			if(!accessToken.isEmpty()) {
+				if (apiIndex == m_accessTokens.size()) m_accessTokens.add(accessToken);
+				if (!refreshToken.isEmpty()) {
+					m_refreshTokens.set(apiIndex, refreshToken);
+					updateRefreshTokensInLoginInfo();
 				}
-			}, refreshDelay);
+				
+				new Timer().schedule(new TimerTask() {
+					public void run() {
+						try {
+							authenticate(refreshToken, apiIndex);
+						} catch (Exception e) {}
+					}
+				}, refreshDelay);
+			}
 		}
-		
-		if(!m_accessToken.isEmpty())
-			Log.log(Level.INFO, "Authenticated with o!api v2 successfully!");
-		else Log.log(Level.INFO, "Failed to authenticate with o!api v2!");
 	}
 	
-	private String sendApiPost(String p_requestMethod, String p_url, String p_body) throws Exception {
+	public String fetchRefreshTokenWithCode(String p_code) throws Exception {		
+		JSONObject bodyJson = new JSONObject();
+	
+		bodyJson.put("client_id", 10018);
+		bodyJson.put("client_secret", m_clientSecret);
+		bodyJson.put("code", p_code);
+		bodyJson.put("grant_type", "authorization_code");
+		bodyJson.put("scope", "public");
+		
+		String body = bodyJson.toString();
+		String response = sendApiPost(0, "POST", "https://osu.ppy.sh/oauth/token", body);
+		
+		if(!response.isEmpty()) {
+			JSONObject apiResponse = new JSONObject(response);
+			return apiResponse.optString("refresh_token", "");
+		}
+		
+		return "";
+	}
+	
+	private String sendApiPost(int p_apiIndex, String p_requestMethod, String p_url, String p_body) throws Exception {
 		URL url = new URL(p_url);
 		HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 
@@ -85,10 +164,10 @@ public class OsuApiManager {
 		connection.setRequestProperty("Content-Type", "application/json");
 		connection.setRequestProperty("charset", "utf-8");
 		connection.setRequestProperty("Content-Length", Integer.toString(p_body.getBytes().length));
-		connection.setRequestProperty("x-api-version", "20240130");
+		connection.setRequestProperty("x-api-version", "20240529");
 		
-		if(!m_accessToken.isEmpty())
-			connection.setRequestProperty("Authorization", "Bearer " + m_accessToken);
+		if(m_accessTokens.size() > p_apiIndex)
+			connection.setRequestProperty("Authorization", "Bearer " + m_accessTokens.get(p_apiIndex));
 		
 		connection.setDoInput(true);
 		connection.setDoOutput(!p_body.isEmpty());

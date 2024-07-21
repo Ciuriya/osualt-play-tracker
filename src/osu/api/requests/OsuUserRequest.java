@@ -24,7 +24,7 @@ public class OsuUserRequest extends OsuRequest {
 	}
 
 	@Override
-	public void send(boolean p_api) throws Exception {
+	public void send(int p_apiIndex) throws Exception {
 		String[] args = getArguments();
 
 		if(args.length < 2) {
@@ -32,13 +32,13 @@ public class OsuUserRequest extends OsuRequest {
 			return;
 		}
 
-		if(p_api)
-			sendApi(args);
+		if(p_apiIndex >= 0)
+			sendApi(p_apiIndex, args);
 		else
 			sendHtml(args);
 	}
 
-	private void sendApi(String[] p_args) throws Exception {
+	private void sendApi(int p_apiIndex, String[] p_args) throws Exception {
 		String type = "id";
 
 		if(p_args.length >= 3) {
@@ -48,7 +48,7 @@ public class OsuUserRequest extends OsuRequest {
 		String userId = URLEncoder.encode(p_args[0], StandardCharsets.UTF_8).replaceAll("\\+", "%20");
 		String mode = "osu";
 		String requestArgsString = "key=" + type;
-		String post = OsuApiManager.getInstance().sendApiRequest("users/" + userId + "/" + mode, requestArgsString.split("\\|"));
+		String post = OsuApiManager.getInstance().sendApiRequest(p_apiIndex, "users/" + userId + "/" + mode, requestArgsString.split("\\|"));
 		
 		if(!checkForEmptyPost(post, userId)) {
 			setAnswer(new JSONObject(post));
