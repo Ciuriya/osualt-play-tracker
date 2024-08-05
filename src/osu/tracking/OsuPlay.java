@@ -77,7 +77,7 @@ public class OsuPlay {
 			if (m_score == 0) {
 				m_score = p_jsonPlay.optLong("total_score", 0);
 				
-				if (m_score == 0) {
+				if (m_score != 0) {
 					int objectCount = m_count300 + m_count100 + m_count50 + m_countMiss;
 					m_score = OsuUtils.convertStandardisedToClassic(m_score, objectCount);
 				}
