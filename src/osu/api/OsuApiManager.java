@@ -9,10 +9,12 @@ import java.net.URL;
 import java.util.LinkedList;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.logging.Level;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import data.Log;
 import utils.Constants;
 import utils.FileUtils;
 
@@ -45,12 +47,12 @@ public class OsuApiManager {
 		loadRefreshTokensFromLoginInfo();
 		
 		m_clientSecret = m_loginInfo.getString("osuApiV2ClientSecret");
-		
+
 		for (String refreshToken : m_refreshTokens) {
 			try {
 				authenticate(refreshToken, -1);
 			} catch (Exception e) {}
-		}			
+		}
 		
 		try {
 			authenticate("", -1);
@@ -94,6 +96,7 @@ public class OsuApiManager {
 	
 	public void authenticate(String p_refreshToken, int p_apiIndex) throws Exception {
 		int apiIndex = p_apiIndex == -1 ? m_accessTokens.size() : p_apiIndex;
+		Log.log(Level.INFO, "authenticating index " + apiIndex + (p_refreshToken.isEmpty() ? " (client credentials)" : ""));
 		JSONObject bodyJson = new JSONObject();
 		
 		bodyJson.put("client_id", 10018);
@@ -116,10 +119,14 @@ public class OsuApiManager {
 			
 			if(!accessToken.isEmpty()) {
 				if (apiIndex == m_accessTokens.size()) m_accessTokens.add(accessToken);
+				else m_accessTokens.set(apiIndex, accessToken);
+				
 				if (!refreshToken.isEmpty()) {
 					m_refreshTokens.set(apiIndex, refreshToken);
 					updateRefreshTokensInLoginInfo();
 				}
+				
+				Log.log(Level.INFO, "authenticated index " + apiIndex);
 				
 				new Timer().schedule(new TimerTask() {
 					public void run() {
