@@ -33,6 +33,8 @@ public class OsuTrackingManager {
 	private List<OsuTrackedUser> m_loadedUsers;
 	private List<Integer> m_loadedUserIds;
 	
+	private List<OsuRefreshRunnable> m_liveCycleRunnablesWaiting;
+	
 	public static OsuTrackingManager getInstance() {
 		if(instance == null) instance = new OsuTrackingManager();
 		
@@ -43,6 +45,7 @@ public class OsuTrackingManager {
 		m_refreshRunnables = new LinkedList<>();
 		m_loadedUsers = new ArrayList<>();
 		m_loadedUserIds = new ArrayList<>();
+		m_liveCycleRunnablesWaiting = new ArrayList<>();
 		
 		ThreadingManager.getInstance().executeAsync(new Runnable() {
 			public void run() {
@@ -84,19 +87,43 @@ public class OsuTrackingManager {
 	private void startLoops() {
 		for(int i = 0; i < Constants.OSU_ACTIVITY_CYCLES.length; ++i) {
 			long[] cycle = Constants.OSU_ACTIVITY_CYCLES[i];
-			long cutoff = cycle[0] * 1000;
 			long refreshDelay = cycle[1] * 1000;
 			
-			OsuRefreshRunnable runnable = new OsuTrackingRunnable(i, refreshDelay > 0 ? refreshDelay : 0);
+			OsuRefreshRunnable runnable = new OsuTrackingRunnable(i, refreshDelay);
 			m_refreshRunnables.add(runnable);
 			
-			startLoop(runnable, refreshDelay == 0 ? cutoff : refreshDelay);
+			startLoop(runnable, refreshDelay);
 		}
 	}
 	
 	public void startLoop(OsuRefreshRunnable p_runnable, long p_maxDelay) {
+		if(p_runnable.getActivityCycle() < Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
+			m_liveCycleRunnablesWaiting.add(p_runnable);
+			
+			if (m_liveCycleRunnablesWaiting.size() != Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) return;
+			
+			List<OsuTrackedUser> users = m_loadedUsers.stream().filter(u -> u.getActivityCycle() < Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT)
+					   										   .collect(Collectors.toCollection(ArrayList::new));
+			
+			int usersPerCycle = (int) Math.ceil(users.size() / (double) m_liveCycleRunnablesWaiting.size());
+			for (OsuRefreshRunnable runnable : m_liveCycleRunnablesWaiting) {
+				LinkedList<OsuTrackedUser> runnableUsers = users.stream().limit(usersPerCycle)
+																		 .collect(Collectors.toCollection(LinkedList::new));
+				runnable.setUsersToRefresh(runnableUsers);
+				
+				users.removeAll(runnableUsers);
+				
+				ThreadingManager.getInstance().executeAsync(runnable, 5000 * 1000, false);
+			}
+			
+			m_liveCycleRunnablesWaiting.clear();
+			
+			return;
+		} 
+		
 		p_runnable.setUsersToRefresh(m_loadedUsers.stream().filter(u -> u.getActivityCycle() == p_runnable.getActivityCycle())
 														   .collect(Collectors.toCollection(LinkedList::new)));
+		
 		ThreadingManager.getInstance().executeAsync(p_runnable, (int) p_maxDelay * 2, false);
 	}
 	

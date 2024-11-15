@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -123,7 +124,7 @@ public class OsuTrackingRunnable extends OsuRefreshRunnable {
 								
 								if(playcount > 0) {
 									if(updateUserActivity(user, playcount)) {
-										user.forceSetActivityCycle(0);
+										user.forceSetActivityCycle(new Random().nextInt(Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT));
 									} else {
 										user.updateActivityCycle();
 									}

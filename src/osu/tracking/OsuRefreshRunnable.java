@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.logging.Level;
 
 import data.Log;
+import utils.Constants;
 import utils.GeneralUtils;
 
 public abstract class OsuRefreshRunnable implements Runnable {
@@ -38,7 +39,7 @@ public abstract class OsuRefreshRunnable implements Runnable {
 				
 				List<OsuTrackedUser> users = new ArrayList<>();
 				
-				if(m_activityCycle > 0) {
+				if(m_activityCycle >= Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
 					for(OsuTrackedUser userToRefresh : new LinkedList<>(m_usersToRefresh)) {
 						if(!userToRefresh.isFetching()) {
 							users.add(userToRefresh);
@@ -53,14 +54,14 @@ public abstract class OsuRefreshRunnable implements Runnable {
 				long currentTime = System.currentTimeMillis();
 				long nextDelay = (m_lastStartTime + m_runnableRefreshDelay - currentTime) / (usersLeft < 50 ? 50 : usersLeft) * 50;
 	
-				if(m_activityCycle == 0) {
+				if(m_activityCycle < Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
 					OsuTrackedUser user = users.get(0);
 					
 					if(!user.isFetching()) {
 						user.setIsFetching(true);
 						
 						if(refreshUser(user)) {
-							user.forceSetActivityCycle(1);
+							user.forceSetActivityCycle(Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT);
 							user.updateDatabaseEntry();
 						}
 	

@@ -39,10 +39,22 @@ public class StatsCommand extends Command {
 			
 			int stalled = stats.getOsuApiStallQuantity();
 			builder.addField("osu! api status", ((Constants.OSU_API_CLIENTS_AUTHENTICATED - stalled) + " Running " + stalled + " Paused"), true);
-			builder.addField("osu! api/html sent last minute", GeneralUtils.toFormattedNumber(Constants.OSU_API_REQUESTS_PER_MINUTE_PER_KEY * 
-																							  stats.getCombinedOsuApiLoad()) + " / " + 
-															   GeneralUtils.toFormattedNumber(Constants.OSU_HTML_REQUESTS_PER_MINUTE * 
-																	   						  stats.getOsuHtmlLoad()), true);
+			
+			String requestsSentLastMinuteString = "";
+			double totalRequests = 0;
+			for (int i = 0; i < Constants.OSU_API_CLIENTS_AUTHENTICATED + 1; ++i) {
+				double requests = 0;
+				
+				if (i == 0) requests = Constants.OSU_HTML_REQUESTS_PER_MINUTE * stats.getOsuHtmlLoad();
+				else requests = Constants.OSU_API_REQUESTS_PER_MINUTE_PER_KEY * stats.getOsuApiLoad(i - 1);
+				
+				totalRequests += requests;
+				requestsSentLastMinuteString += GeneralUtils.toFormattedNumber(requests) + " / ";
+			}
+			
+			requestsSentLastMinuteString = GeneralUtils.toFormattedNumber(totalRequests) + " total\n" + requestsSentLastMinuteString;
+			
+			builder.addField("osu! html/api sent last minute", requestsSentLastMinuteString.substring(0, requestsSentLastMinuteString.length() - 3), true);
 			builder.addField("o!api requests sent/failed", 
 							 stats.getCombinedOsuApiRequestsSent() + " / " + stats.getCombinedOsuApiRequestsFailed(), true);
 			builder.addField("o!html requests sent/failed", 
@@ -79,10 +91,12 @@ public class StatsCommand extends Command {
 					fieldText += " / " + TimeUtils.toDuration(cycleRunnable.getTimeUntilStop(), false) + " left";
 			} else fieldText = "Not running";
 			
+			String cycleName = i < Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT ? "Live Tracking Cycle" : "Cycle " + (i - Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT);
+			
 			if(showFullStats)
-				builder.addField("Cycle " + i + " users left/total | avg delay/elapsed/expected time left/calc'd time left", fieldText, false);
+				builder.addField(cycleName + " users left/total | avg delay/elapsed/expected time left/calc'd time left", fieldText, false);
 			else
-				builder.addField("Cycle " + i + " progress", fieldText, false);
+				builder.addField(cycleName + " progress", fieldText, false);
 		}
 		
 		DiscordChatUtils.embed(p_event.getChannel(), builder.build());

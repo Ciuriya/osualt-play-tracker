@@ -135,15 +135,16 @@ public class OsuStatusCommand extends Command {
 		
 		String cycleText = "";
 		
-		if(activityCycle <= 1) {
-			cycleText = "Live Tracking (Cycle " + activityCycle + ")";
+		if(activityCycle <= Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
+			cycleText = "Live Tracking";
 		} else {
 			long previousCutoff = Constants.OSU_ACTIVITY_CYCLES[activityCycle - 1][0] * 1000;
 			long cutoff = Constants.OSU_ACTIVITY_CYCLES[activityCycle][0] * 1000;
+			int displayActivityCycle = activityCycle - Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT;
 			
-			cycleText = "Activity Cycle " + activityCycle + " (Inactivity >" + TimeUtils.toDuration(previousCutoff, false) + 
-															(activityCycle == Constants.OSU_ACTIVITY_CYCLES.length - 1 ? 
-															")" : " and <" + TimeUtils.toDuration(cutoff, false) + ")");
+			cycleText = "Activity Cycle " + displayActivityCycle + " (Inactivity >" + TimeUtils.toDuration(previousCutoff, false) + 
+																   (activityCycle == Constants.OSU_ACTIVITY_CYCLES.length - 1 ? 
+																   ")" : " and <" + TimeUtils.toDuration(cutoff, false) + ")");
 		}
 
 		builder.setAuthor(p_username + " • " + cycleText, 
@@ -154,7 +155,7 @@ public class OsuStatusCommand extends Command {
 		
 		long timeUntilRefresh = refreshRunnable.getTimeUntilUserRefresh(user.getUserId());
 		
-		if(timeUntilRefresh == -1 && activityCycle > 1) {
+		if(timeUntilRefresh == -1 && activityCycle > Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
 			timeUntilRefresh = refreshRunnable.getExpectedTimeUntilStop();
 			long maxTimeUntilNextRefresh = timeUntilRefresh + refreshRunnable.getRefreshDelay();
 			
@@ -167,7 +168,7 @@ public class OsuStatusCommand extends Command {
 				descriptionText += "around " + timeUntilRefreshTimestamp;
 			else
 				descriptionText += "between " + timeUntilRefreshTimestamp + " and " + maxTimeUntilNextRefreshTimestamp;
-		} else if(activityCycle > 1) {
+		} else if(activityCycle > Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
 			long adjustedTimeUntilRefresh = (System.currentTimeMillis() + timeUntilRefresh) / 1000;
 			String timeString = "<t:" + adjustedTimeUntilRefresh + ":R>";
 			
@@ -176,7 +177,7 @@ public class OsuStatusCommand extends Command {
 			descriptionText += "\nRefreshing **" + timeString + "**";
 		}
 
-		if(activityCycle > 1) {
+		if(activityCycle > Constants.OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT) {
 			String storedUserId = OsuUtils.getOsuPlayerIdFromDiscordUserId(p_authorId, true);
 			
 			if(storedUserId.contentEquals(p_userId))

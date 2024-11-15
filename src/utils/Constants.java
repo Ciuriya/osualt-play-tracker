@@ -50,10 +50,15 @@ public class Constants {
 	// interval between osu registered user refreshes
 	public static final int OSU_REGISTERED_USER_REFRESH_INTERVAL = 300;
 	
+	// how many cycles with no refresh frequency (fully refreshing users individually) do we have
+	public static final int OSU_FULL_REFRESH_ACTIVITY_CYCLE_COUNT = 3;
+	
 	// activity cycles mapped with the cutoff in seconds before you switch to the next cycle
 	// and the refresh frequency of the cycle
 	public static final long[][] OSU_ACTIVITY_CYCLES = new long[][] {
-		new long[] {30, 0},         // 30s / not needed
+		new long[] {90, 0},         // 90s / not needed
+		new long[] {180, 0},        // 3m / not needed
+		new long[] {360, 0},        // 6m / not needed
 		new long[] {900, 20},       // 15m / 20s
 		new long[] {7200, 40},      // 2h  / 40s
 		new long[] {14400, 60},     // 4h  / 60s
