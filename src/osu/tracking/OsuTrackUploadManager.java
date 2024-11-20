@@ -252,7 +252,7 @@ public class OsuTrackUploadManager {
 								   "INSERT INTO scores VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, " +
 								   "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
 								   "ON CONFLICT ON CONSTRAINT scores_pkey DO UPDATE SET " + 
-								   "score = excluded.score, count300 = EXCLUDED.count300, " +
+								   "score = EXCLUDED.score, count300 = EXCLUDED.count300, " +
 								   "count100 = EXCLUDED.count100, count50 = EXCLUDED.count50, " + 
 								   "countmiss = EXCLUDED.countmiss, combo = EXCLUDED.combo, " + 
 								   "perfect = EXCLUDED.perfect, enabled_mods = EXCLUDED.enabled_mods, " + 
@@ -263,6 +263,11 @@ public class OsuTrackUploadManager {
 								   "is_nf = EXCLUDED.is_nf, is_nc = EXCLUDED.is_nc, is_td = EXCLUDED.is_td, " + 
 								   "is_so = EXCLUDED.is_so, is_sd = EXCLUDED.is_sd, is_pf = EXCLUDED.is_pf " + 
 								   "WHERE EXCLUDED.score > scores.score");
+			
+			PreparedStatement modSt = conn.prepareStatement(
+									  "INSERT INTO scoresmods VALUES (?, ?, ?::jsonb, ?) " +
+									  "ON CONFLICT ON CONSTRAINT scoresmods_pkey DO UPDATE SET " +
+									  "mods = EXCLUDED.mods, date_played = EXCLUDED.date_played");
 			
 			List<OsuPlay> excluded = new ArrayList<>();
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
@@ -320,10 +325,27 @@ public class OsuTrackUploadManager {
 				}, 5000);
 			} else {
 				ApplicationStats.getInstance().addScoresUploaded(m_playsToUpload.size());
-				
 				OsuPlay.setUploaded(m_playsToUpload.stream().collect(Collectors.toList()), output);
+				
+				for(int i = 0; i < output.length; ++i) {
+					OsuPlay play = m_playsToUpload.get(i);
+					
+					if(output[i] > 0) {
+						modSt.setInt(1, GeneralUtils.stringToInt(play.getUserId()));
+						modSt.setLong(2, play.getBeatmapId());
+						modSt.setString(3, play.getMods());
+						modSt.setTimestamp(4, play.getDatePlayed(), calendar);
+						
+						modSt.addBatch();
+					}
+				}
+				
+				modSt.executeBatch();
+				
 				m_playsToUpload.clear();
 			}
+			
+			modSt.close();
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Failed to upload " + m_playsToUpload.size() + " plays to the remote database", e);
 		} finally {
