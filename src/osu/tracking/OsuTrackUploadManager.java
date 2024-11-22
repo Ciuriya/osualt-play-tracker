@@ -317,6 +317,21 @@ public class OsuTrackUploadManager {
 
 			m_playsToUpload.removeAll(excluded);
 			
+			for(int i = 0; i < output.length; ++i) {
+				OsuPlay play = m_playsToUpload.get(i);
+				
+				if(output[i] > 0 || output[i] == PreparedStatement.SUCCESS_NO_INFO) {
+					modSt.setInt(1, GeneralUtils.stringToInt(play.getUserId()));
+					modSt.setLong(2, play.getBeatmapId());
+					modSt.setString(3, play.getMods());
+					modSt.setTimestamp(4, play.getDatePlayed(), calendar);
+					
+					modSt.addBatch();
+				}
+			}
+			
+			modSt.executeBatch();
+			
 			if(output.length != m_playsToUpload.size()) {
 				new Timer().schedule(new TimerTask() {
 					public void run() {
@@ -326,21 +341,6 @@ public class OsuTrackUploadManager {
 			} else {
 				ApplicationStats.getInstance().addScoresUploaded(m_playsToUpload.size());
 				OsuPlay.setUploaded(m_playsToUpload.stream().collect(Collectors.toList()), output);
-				
-				for(int i = 0; i < output.length; ++i) {
-					OsuPlay play = m_playsToUpload.get(i);
-					
-					if(output[i] > 0) {
-						modSt.setInt(1, GeneralUtils.stringToInt(play.getUserId()));
-						modSt.setLong(2, play.getBeatmapId());
-						modSt.setString(3, play.getMods());
-						modSt.setTimestamp(4, play.getDatePlayed(), calendar);
-						
-						modSt.addBatch();
-					}
-				}
-				
-				modSt.executeBatch();
 				
 				m_playsToUpload.clear();
 			}
