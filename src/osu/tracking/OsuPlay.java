@@ -48,6 +48,9 @@ public class OsuPlay {
 	private long m_bestId;
 	private boolean m_passed;
 	
+	private String m_statistics;
+	private String m_maxStatistics;
+	
 	public OsuPlay(JSONObject p_jsonPlay) {
 		loadFromJson(p_jsonPlay);
 	}
@@ -61,6 +64,7 @@ public class OsuPlay {
 			m_bestId = p_jsonPlay.optLong("best_id", 0);
 			
 			JSONObject statisticsObject = p_jsonPlay.getJSONObject("statistics");
+			JSONObject maxStatisticsObject = p_jsonPlay.optJSONObject("maximum_statistics");
 			JSONObject beatmapObject = p_jsonPlay.optJSONObject("beatmap");
 			JSONObject beatmapSetObject = p_jsonPlay.optJSONObject("beatmapset");
 			
@@ -116,6 +120,11 @@ public class OsuPlay {
 			
 			String status = beatmapObject != null ? beatmapObject.optString("status", "") : "";
 			m_canUploadRankedStatus = status.equalsIgnoreCase("ranked") || status.equalsIgnoreCase("loved") || status.equalsIgnoreCase("approved");
+			
+			m_statistics = statisticsObject.toString();
+			
+			if (maxStatisticsObject != null) m_maxStatistics = maxStatisticsObject.toString();
+			else m_maxStatistics = "{}";
 		} catch(Exception e) {
 			Log.log(Level.SEVERE, "Failed to load play from json", e);
 		}
@@ -142,6 +151,8 @@ public class OsuPlay {
 		m_title = p_resultSet.getString(18);
 		m_accuracy = p_resultSet.getDouble(19);
 		m_updateStatus = p_resultSet.getInt(20);
+		m_statistics = p_resultSet.getString(21);
+		m_maxStatistics = p_resultSet.getString(22);
 	}
 	
 	public static List<OsuPlay> getPlaysToUpload() {
@@ -177,7 +188,8 @@ public class OsuPlay {
 								   "INSERT IGNORE INTO `osu-play` " +
 								   "(`score_id`, `user_id`, `beatmap_id`, `score`, `count300`, `count100`, `count50`, `countmiss`, " + 
 								   "`combo`, `perfect`, `mods`, `date_played`, `rank`, `pp`, `replay_available`, `uploaded`, " + 
-								   "`insertion-date`, `title`, `accuracy`, `upload_status`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+								   "`insertion-date`, `title`, `accuracy`, `upload_status`, `statistics`, `max_statistics`) "
+								   + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 			for(OsuPlay play : p_plays) {
@@ -204,6 +216,8 @@ public class OsuPlay {
 				st.setString(18, play.m_title);
 				st.setDouble(19, play.m_accuracy);
 				st.setInt(20, play.m_updateStatus);
+				st.setString(21, play.m_statistics);
+				st.setString(22, play.m_maxStatistics);
 				
 				st.addBatch();
 			}
@@ -381,6 +395,14 @@ public class OsuPlay {
 	
 	public int getUpdateStatus() {
 		return m_updateStatus;
+	}
+	
+	public String getStatistics() {
+		return m_statistics;
+	}
+	
+	public String getMaximumStatistics() {
+		return m_maxStatistics;
 	}
 	
 	public void setUploaded(boolean p_uploaded) {
