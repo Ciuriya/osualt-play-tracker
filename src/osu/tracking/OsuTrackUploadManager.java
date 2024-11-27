@@ -268,7 +268,8 @@ public class OsuTrackUploadManager {
 									  "INSERT INTO scoresmods (user_id, beatmap_id, mods, date_played, statistics, maximum_statistics) " +
 									  "VALUES (?, ?, ?::jsonb, ?, ?::jsonb, ?::jsonb) " +
 									  "ON CONFLICT ON CONSTRAINT scoresmods_pkey DO UPDATE SET " +
-									  "mods = EXCLUDED.mods, date_played = EXCLUDED.date_played");
+									  "mods = EXCLUDED.mods, date_played = EXCLUDED.date_played, " +
+									  "statistics = EXCLUDED.statistics, maximum_statistics = EXCLUDED.maximum_statistics");
 			
 			List<OsuPlay> excluded = new ArrayList<>();
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
