@@ -274,7 +274,7 @@ public class OsuTrackUploadManager {
 			List<OsuPlay> excluded = new ArrayList<>();
 			Calendar calendar = Calendar.getInstance(Constants.DEFAULT_TIMEZONE);
 			
-			for(OsuPlay play : m_playsToUpload) {
+			for(OsuPlay play : new ArrayList<OsuPlay>(m_playsToUpload)) {
 				if(play.getCount300() == 0 && play.getCount100() == 0 && play.getCount50() == 0 && play.getCountMiss() == 0) {
 					excluded.add(play);
 					continue;
