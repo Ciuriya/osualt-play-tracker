@@ -21,7 +21,7 @@ public class Constants {
 	public static final String OSUALT_REMOTE_DB_NAME = "osu";
 	
 	// the osu!alt db url
-	public static final String OSUALT_REMOTE_DB_URL = "postgresql://home.ciuriya.com:5432";
+	public static final String OSUALT_REMOTE_DB_URL = "postgresql://ciuriya.com:5432";
 	
 	// the default color used on embeds
 	public static final Color DEFAULT_EMBED_COLOR = Color.CYAN;
